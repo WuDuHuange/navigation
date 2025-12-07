@@ -26,13 +26,7 @@
           >
             博客
           </router-link>
-          <router-link 
-            to="/admin" 
-            class="text-dark-300 hover:text-primary-400 transition-colors duration-200"
-            active-class="text-primary-400"
-          >
-            管理
-          </router-link>
+          <!-- 管理入口已移除，使用 GitHub OAuth 登录或直接访问后台 -->
           <a 
             href="https://github.com" 
             target="_blank" 
