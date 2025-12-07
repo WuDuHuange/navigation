@@ -4,7 +4,7 @@
 
 一个简洁美观的个人项目导航页，支持博客文章发布与访客评论功能。
 
-## 🚀 快速开始
+## 快速开始
 
 ### 前端启动
 
@@ -35,7 +35,7 @@ npm run dev         # 开发模式
 
 API 运行在 http://localhost:4000
 
-## 📁 项目结构
+## 项目结构
 
 ```
 navigation/
@@ -70,15 +70,11 @@ navigation/
 3. 创建 PostgreSQL 数据库并连接
 4. 运行 `npm run db:migrate` 初始化
 
-## 🔗 当前导航链接
-
-- [每日一签](https://reimu-fortune-qqfo.vercel.app/) - 灵梦御神签
-
-## 📝 API 文档
+## API 文档
 
 详见 [project.md](./project.md) 中的 API 规格设计章节。
 
-## 🛠️ 技术栈
+## 技术栈
 
 **前端**
 - Vue 3 + Vite
