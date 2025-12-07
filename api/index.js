@@ -15,6 +15,7 @@ app.use('/api/v1/articles', require('./routes/articles'))
 app.use('/api/v1/comments', require('./routes/comments'))
 app.use('/api/v1/auth', require('./routes/auth'))
 app.use('/api/v1/settings', require('./routes/settings'))
+app.use('/api/v1/upload', require('./routes/upload'))
 
 // 健康检查
 app.get('/api/health', (req, res) => {
