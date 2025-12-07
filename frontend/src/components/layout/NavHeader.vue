@@ -26,6 +26,13 @@
           >
             博客
           </router-link>
+          <router-link 
+            to="/admin" 
+            class="text-dark-300 hover:text-primary-400 transition-colors duration-200"
+            active-class="text-primary-400"
+          >
+            管理
+          </router-link>
           <a 
             href="https://github.com" 
             target="_blank" 
