@@ -1,8 +1,12 @@
 const { Pool } = require('pg')
 
+// 移除 channel_binding 参数（pg 库不支持）
+let connectionString = process.env.DATABASE_URL || ''
+connectionString = connectionString.replace('&channel_binding=require', '')
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  connectionString,
+  ssl: { rejectUnauthorized: false }
 })
 
 module.exports = {
