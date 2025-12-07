@@ -60,7 +60,6 @@ node scripts/init-db.js
 
 - 首页：`https://你的域名.vercel.app`
 - 管理后台：`https://你的域名.vercel.app/admin`
-- 默认账号：`admin` / `admin123`（请立即修改）
 
 ## 🛠️ 本地开发
 
