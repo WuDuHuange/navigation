@@ -16,6 +16,7 @@ class AIService {
     }
     
     try {
+      this.apiKey = apiKey
       this.genAI = new GoogleGenerativeAI(apiKey)
 
       // 先尝试不指定模型，让服务或 SDK 选择默认模型
@@ -36,7 +37,18 @@ class AIService {
         if (!this.model) {
           (async () => {
             try {
-              const list = await this.genAI.listModels()
+              let list = null
+              if (typeof this.genAI.listModels === 'function') {
+                list = await this.genAI.listModels()
+              } else {
+                // SDK 不提供 listModels，使用 REST 接口回退
+                try {
+                  const resp = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${encodeURIComponent(this.apiKey)}`)
+                  list = await resp.json()
+                } catch (errFetch) {
+                  console.warn('通过 REST 列出模型失败:', errFetch.message)
+                }
+              }
               const models = list && (list.models || list.model || [])
               const candidates = (models || []).filter(m => {
                 const methods = m.supportedMethods || m.methods || []
