@@ -22,9 +22,9 @@
     <section>
       <div class="flex items-center justify-between mb-8">
         <h2 class="text-2xl font-bold text-white">🚀 项目入口</h2>
-        <span class="text-dark-500 text-sm">{{ links.length }} 个项目</span>
+        <span class="text-dark-500 text-sm">{{ linksStore.links.length }} 个项目</span>
       </div>
-      <LinkGrid :links="links" />
+      <LinkGrid :links="linksStore.links" />
     </section>
 
     <!-- 最新文章预览（可选） -->
@@ -63,28 +63,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import LinkGrid from '../components/home/LinkGrid.vue'
+import { useLinksStore } from '../stores/links'
 
-// 导航链接数据（后续可改为从 API 获取）
-const links = ref([
-  {
-    id: 1,
-    title: '每日一签',
-    description: '灵梦御神签 - 每日运势占卜，感受东方风情',
-    url: 'https://reimu-fortune-qqfo.vercel.app/',
-    icon: '🎋',
-    category: '工具',
-    sort_order: 1
-  },
-  {
-    id: 2,
-    title: '更多项目',
-    description: '敬请期待更多有趣的项目上线...',
-    url: '#',
-    icon: '✨',
-    category: '待开发',
-    sort_order: 99
-  }
-])
+// 使用 Pinia store 获取导航链接
+const linksStore = useLinksStore()
 
 // 最新文章（后续从 API 获取）
 const recentArticles = ref([])
@@ -97,8 +79,6 @@ const formatDate = (dateStr) => {
 }
 
 onMounted(async () => {
-  // TODO: 从 API 获取导航链接
-  // const res = await fetch('/api/v1/links')
-  // links.value = await res.json()
+  await linksStore.fetchLinks()
 })
 </script>
