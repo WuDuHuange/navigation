@@ -61,15 +61,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import LinkGrid from '../components/home/LinkGrid.vue'
 import { useLinksStore } from '../stores/links'
+import { useArticlesStore } from '../stores/articles'
 
 // 使用 Pinia store 获取导航链接
 const linksStore = useLinksStore()
 
-// 最新文章（后续从 API 获取）
-const recentArticles = ref([])
+// 文章 store，用于拉取最新文章
+const articlesStore = useArticlesStore()
+const recentArticles = computed(() => articlesStore.articles.slice(0, 2))
 
 // 日期格式化
 const formatDate = (dateStr) => {
@@ -80,5 +82,7 @@ const formatDate = (dateStr) => {
 
 onMounted(async () => {
   await linksStore.fetchLinks()
+  // 拉取第一页文章，供首页预览使用（取最新两条）
+  await articlesStore.fetchArticles(1)
 })
 </script>
