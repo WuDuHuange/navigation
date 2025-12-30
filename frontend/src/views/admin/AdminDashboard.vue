@@ -459,6 +459,17 @@ const fetchData = async () => {
         settings.value = settingsData.data
       }
     }
+
+    // 获取待审核评论
+    const commentsRes = await fetch(`${API_URL}/api/v1/comments/pending`, {
+      headers: authStore.getAuthHeaders()
+    })
+    if (commentsRes.ok) {
+      const commentsData = await commentsRes.json()
+      if (commentsData.success) {
+        pendingComments.value = commentsData.data
+      }
+    }
   } catch (err) {
     console.error('获取数据失败:', err)
   }

@@ -4,6 +4,23 @@ const authMiddleware = require('../middleware/auth')
 
 const router = express.Router()
 
+// GET /comments/pending - 获取待审核评论（需要登录）
+router.get('/pending', authMiddleware, async (req, res, next) => {
+  try {
+    const result = await db.query(
+      `SELECT c.id, c.article_id, c.nickname, c.email, c.content, c.ip_address, c.created_at,
+              a.title as article_title, a.slug as article_slug
+       FROM comments c
+       LEFT JOIN articles a ON c.article_id = a.id
+       WHERE c.is_approved = false 
+       ORDER BY c.created_at DESC`
+    )
+    res.json({ success: true, data: result.rows })
+  } catch (err) {
+    next(err)
+  }
+})
+
 // GET /comments/article/:articleId
 router.get('/article/:articleId', async (req, res, next) => {
   try {
