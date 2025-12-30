@@ -151,4 +151,41 @@ router.delete('/:id', authMiddleware, async (req, res, next) => {
   }
 })
 
+// ============ 嵌套评论路由 ============
+
+// GET /articles/:id/comments - 获取文章评论
+router.get('/:id/comments', async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const result = await db.query(
+      `SELECT id, nickname, content, created_at FROM comments 
+       WHERE article_id = $1 AND is_approved = true ORDER BY created_at DESC`,
+      [id]
+    )
+    res.json({ success: true, data: result.rows })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// POST /articles/:id/comments - 提交评论
+router.post('/:id/comments', async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { nickname, email, content } = req.body
+    if (!nickname || !content) {
+      return res.status(400).json({ error: '昵称和内容为必填项' })
+    }
+    const ip = req.headers['x-forwarded-for'] || req.ip
+    const result = await db.query(
+      `INSERT INTO comments (article_id, nickname, email, content, ip_address)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id, nickname, content, created_at`,
+      [id, nickname, email, content, ip]
+    )
+    res.status(201).json({ success: true, data: result.rows[0], message: '评论已提交，等待审核' })
+  } catch (err) {
+    next(err)
+  }
+})
+
 module.exports = router

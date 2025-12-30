@@ -1,5 +1,5 @@
 <template>
-  <header class="sticky top-0 z-50 backdrop-blur-md bg-dark-900/80 border-b border-dark-700">
+  <header class="sticky top-0 z-50 backdrop-blur-md bg-dark-900/80 border-b border-dark-700 theme-transition">
     <div class="container mx-auto px-4">
       <nav class="flex items-center justify-between h-16">
         <!-- Logo -->
@@ -11,7 +11,7 @@
         </router-link>
 
         <!-- 导航链接 -->
-        <div class="flex items-center gap-6">
+        <div class="flex items-center gap-4 md:gap-6">
           <router-link 
             to="/" 
             class="text-dark-300 hover:text-primary-400 transition-colors duration-200"
@@ -26,7 +26,10 @@
           >
             博客
           </router-link>
-          <!-- 管理入口已移除，使用 GitHub OAuth 登录或直接访问后台 -->
+          
+          <!-- 主题切换按钮 -->
+          <ThemeToggle />
+          
           <a 
             href="https://github.com" 
             target="_blank" 
@@ -44,4 +47,5 @@
 </template>
 
 <script setup>
+import ThemeToggle from '../common/ThemeToggle.vue'
 </script>
