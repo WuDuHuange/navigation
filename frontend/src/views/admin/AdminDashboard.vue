@@ -255,15 +255,18 @@
           </div>
 
           <!-- 测试 AI 连接 -->
-          <div v-if="settings.ai_available" class="bg-dark-900/50 rounded-lg p-4">
+          <div class="bg-dark-900/50 rounded-lg p-4">
             <label class="block text-sm font-medium text-dark-300 mb-2">测试 AI 连接</label>
-            <button
-              @click="testAI"
-              :disabled="testingAI"
-              class="px-4 py-2 bg-dark-700 hover:bg-dark-600 disabled:bg-dark-700/50 text-white rounded-lg transition-colors"
-            >
-              {{ testingAI ? '测试中...' : '🧪 测试连接' }}
-            </button>
+            <div class="flex items-center gap-3">
+              <button
+                @click="testAI"
+                :disabled="testingAI"
+                class="px-4 py-2 bg-dark-700 hover:bg-dark-600 disabled:bg-dark-700/50 text-white rounded-lg transition-colors"
+              >
+                {{ testingAI ? '测试中...' : '🧪 测试连接' }}
+              </button>
+              <span v-if="!settings.ai_available" class="text-xs text-dark-500">先保存 API Key 后再测试</span>
+            </div>
             <p v-if="aiTestResult" class="text-sm mt-2" :class="aiTestResult.success ? 'text-green-400' : 'text-red-400'">
               {{ aiTestResult.message }}
             </p>

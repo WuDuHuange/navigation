@@ -19,14 +19,18 @@ class AIService {
       try {
         this.model = this.genAI.getGenerativeModel()
       } catch (err) {
-        // 如果 SDK 要求模型名，尝试从环境变量读取可选模型名
+        // 如果 SDK 要求模型名，使用环境变量或安全的默认模型
         const envModel = process.env.GEMINI_MODEL
-        if (envModel) {
-          try {
-            this.model = this.genAI.getGenerativeModel({ model: envModel })
-          } catch (e2) {
-            console.warn('尝试使用环境变量 GEMINI_MODEL 指定模型失败:', e2.message)
+        const fallbackModel = envModel || 'gemini-1.5-flash'
+        try {
+          this.model = this.genAI.getGenerativeModel({ model: fallbackModel })
+          if (envModel) {
+            console.log('Gemini AI 使用环境变量指定的模型:', envModel)
+          } else {
+            console.log('Gemini AI 使用默认模型:', fallbackModel)
           }
+        } catch (e2) {
+          console.warn('使用指定/默认模型创建生成器失败:', e2.message)
         }
 
         // 如果仍然没有模型，异步列出模型并尝试选择一个合适的
