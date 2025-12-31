@@ -30,9 +30,9 @@
     <!-- 导航卡片 -->
     <section>
       <div class="flex items-center justify-between mb-8">
-        <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+        <h2 class="text-2xl font-bold text-dark-300 dark:text-white flex items-center gap-3">
           <span class="text-3xl">🚀</span>
-          <span class="bg-gradient-to-r from-white to-dark-300 bg-clip-text text-transparent">项目入口</span>
+          <span class="bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600 dark:from-white dark:via-dark-300 dark:to-dark-400 bg-clip-text text-transparent">项目入口</span>
         </h2>
         <span class="px-3 py-1.5 bg-dark-800/50 border border-dark-700/50 rounded-full text-dark-400 text-sm backdrop-blur-sm">
           {{ linksStore.links.length }} 个项目
@@ -44,9 +44,9 @@
     <!-- 最新文章预览（可选） -->
     <section v-if="recentArticles.length > 0" class="mt-20">
       <div class="flex items-center justify-between mb-8">
-        <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+        <h2 class="text-2xl font-bold text-dark-300 dark:text-white flex items-center gap-3">
           <span class="text-3xl">📝</span>
-          <span class="bg-gradient-to-r from-white to-dark-300 bg-clip-text text-transparent">最新动态</span>
+          <span class="bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600 dark:from-white dark:via-dark-300 dark:to-dark-400 bg-clip-text text-transparent">最新动态</span>
         </h2>
         <router-link 
           to="/blog" 
