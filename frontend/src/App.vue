@@ -1,12 +1,15 @@
 <template>
-  <div class="min-h-screen gradient-bg theme-transition">
+  <div class="min-h-screen gradient-bg theme-transition relative">
     <!-- 鼠标跟随效果 -->
     <CursorEffect />
     
+    <!-- 背景网格装饰 -->
+    <div class="fixed inset-0 bg-grid-pattern opacity-[0.02] pointer-events-none"></div>
+    
     <NavHeader />
-    <main class="container mx-auto px-4 py-8">
+    <main class="container mx-auto px-4 py-8 relative z-10">
       <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
+        <transition name="page" mode="out-in">
           <component :is="Component" />
         </transition>
       </router-view>
@@ -32,13 +35,30 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
+/* 页面切换过渡动画 */
+.page-enter-active {
+  transition: all 0.3s ease-out;
 }
 
-.fade-enter-from,
-.fade-leave-to {
+.page-leave-active {
+  transition: all 0.2s ease-in;
+}
+
+.page-enter-from {
   opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* 背景网格图案 */
+.bg-grid-pattern {
+  background-image: 
+    linear-gradient(rgba(249, 115, 22, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(249, 115, 22, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
 }
 </style>
