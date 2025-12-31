@@ -21,7 +21,7 @@ class AIService {
       } catch (err) {
         // 如果 SDK 要求模型名，使用环境变量或安全的默认模型
         const envModel = process.env.GEMINI_MODEL
-        const fallbackModel = envModel || 'gemini-1.5-flash'
+        const fallbackModel = envModel || 'gemini-2.5-flash'
         try {
           this.model = this.genAI.getGenerativeModel({ model: fallbackModel })
           if (envModel) {
