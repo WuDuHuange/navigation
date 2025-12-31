@@ -2,7 +2,7 @@
   <button
     @click="handleToggle"
     class="relative w-16 h-9 rounded-full transition-all duration-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 overflow-hidden group"
-    :class="themeStore.theme === 'dark' ? 'bg-slate-800 shadow-inner' : 'bg-gradient-to-r from-sky-200 to-blue-200'"
+    :class="themeStore.theme === 'dark' ? 'bg-slate-800 shadow-inner' : 'bg-gradient-to-r from-amber-100 to-orange-100'"
     :title="themeStore.theme === 'dark' ? '切换到日间模式' : '切换到夜间模式'"
   >
     <!-- 夜间背景 - 星星 -->
@@ -14,11 +14,11 @@
       <span class="absolute w-0.5 h-0.5 bg-white/70 rounded-full top-6 left-7 animate-pulse" style="animation-delay: 0.2s"></span>
     </div>
     
-    <!-- 日间背景 - 云朵 -->
+    <!-- 日间背景 - 柔和云朵 -->
     <div class="absolute inset-0 transition-all duration-500" :class="themeStore.theme === 'light' ? 'opacity-100' : 'opacity-0'">
-      <span class="absolute w-3 h-2 bg-white rounded-full top-2 left-2 shadow-sm" style="filter: blur(0.5px)"></span>
-      <span class="absolute w-4 h-2.5 bg-white rounded-full top-4 left-7 shadow-sm" style="filter: blur(0.5px)"></span>
-      <span class="absolute w-2 h-1.5 bg-white/90 rounded-full top-5 left-3 shadow-sm" style="filter: blur(0.5px)"></span>
+      <span class="absolute w-3 h-2 bg-white/70 rounded-full top-2 left-2 shadow-sm"></span>
+      <span class="absolute w-4 h-2.5 bg-white/60 rounded-full top-4 left-7 shadow-sm"></span>
+      <span class="absolute w-2 h-1.5 bg-white/50 rounded-full top-5 left-3 shadow-sm"></span>
     </div>
 
     <!-- 太阳/月亮切换球 -->
@@ -27,7 +27,7 @@
       :class="[
         themeStore.theme === 'dark' 
           ? 'left-1 bg-gradient-to-br from-slate-100 to-slate-300 shadow-lg' 
-          : 'left-8 bg-gradient-to-br from-amber-300 to-orange-400 shadow-lg shadow-orange-300/50'
+          : 'left-8 bg-gradient-to-br from-amber-200 to-orange-300 shadow-lg shadow-orange-200/50'
       ]"
       :style="{ transform: isAnimating ? 'scale(0.9)' : 'scale(1)' }"
     >
@@ -57,7 +57,7 @@
     <!-- 悬浮光晕效果 -->
     <div 
       class="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-      :class="themeStore.theme === 'dark' ? 'bg-primary-500/10' : 'bg-amber-400/20'"
+      :class="themeStore.theme === 'dark' ? 'bg-primary-500/10' : 'bg-amber-300/20'"
     ></div>
   </button>
 </template>

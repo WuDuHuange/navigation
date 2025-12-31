@@ -47,13 +47,14 @@ const colors = computed(() => {
       trail: ['#f97316', '#fb923c', '#fdba74']
     }
   } else {
+    // 日间模式使用更柔和的棕橙色
     return {
-      primary: '#ea580c',
-      secondary: '#f97316',
-      glow: 'rgba(234, 88, 12, 0.5)',
-      ring: 'rgba(234, 88, 12,',
-      ripple: 'rgba(234, 88, 12,',
-      trail: ['#ea580c', '#f97316', '#fb923c']
+      primary: '#a16207',
+      secondary: '#b45309',
+      glow: 'rgba(161, 98, 7, 0.4)',
+      ring: 'rgba(161, 98, 7,',
+      ripple: 'rgba(180, 83, 9,',
+      trail: ['#a16207', '#b45309', '#d97706']
     }
   }
 })
