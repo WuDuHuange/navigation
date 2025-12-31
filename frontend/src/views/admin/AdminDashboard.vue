@@ -239,10 +239,14 @@
                 {{ savingSettings ? '保存中...' : '保存' }}
               </button>
             </div>
+            <!-- 保存结果提示 -->
+            <p v-if="settingsSaveResult" class="text-sm mt-2" :class="settingsSaveResult.success ? 'text-green-400' : 'text-red-400'">
+              {{ settingsSaveResult.message }}
+            </p>
             <p class="text-xs text-dark-500 mt-2">
               当前状态：
               <span :class="settings.ai_available ? 'text-green-400' : 'text-red-400'">
-                {{ settings.ai_available ? '已配置' : '未配置' }}
+                {{ settings.ai_available ? '✓ 已配置' : '✗ 未配置' }}
               </span>
             </p>
             <p class="text-xs text-dark-500 mt-1">
@@ -313,62 +317,109 @@
       </div>
     </div>
 
-    <!-- 文章编辑弹窗 -->
-    <div v-if="showArticleModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div class="bg-dark-800 border border-dark-700 rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <h3 class="text-lg font-semibold text-white mb-4">
-          {{ editingArticle ? '编辑文章' : '发布文章' }}
-        </h3>
-        <form @submit.prevent="saveArticleForm" class="space-y-4">
-          <div>
-            <label class="block text-sm text-dark-400 mb-1">标题 *</label>
-            <input v-model="articleForm.title" required class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white" />
-          </div>
-          <div>
-            <label class="block text-sm text-dark-400 mb-1">URL 标识 (slug)</label>
-            <input v-model="articleForm.slug" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white" placeholder="留空自动生成" />
-          </div>
-          <div>
-            <label class="block text-sm text-dark-400 mb-1">摘要</label>
-            <input v-model="articleForm.summary" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white" />
-          </div>
-          <div>
-            <label class="block text-sm text-dark-400 mb-1">标签（逗号分隔）</label>
-            <input v-model="articleForm.tagsInput" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white" placeholder="公告, 教程" />
-          </div>
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="block text-sm text-dark-400">内容 (Markdown) *</label>
-              <ImageUpload @uploaded="onImageUploaded" />
+    <!-- 文章编辑弹窗 - 优化版 -->
+    <div v-if="showArticleModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div class="bg-dark-800 border border-dark-700 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+        <!-- 弹窗头部 -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-dark-700">
+          <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+            <span>{{ editingArticle ? '✏️ 编辑文章' : '📝 发布新文章' }}</span>
+            <span v-if="editingArticle" class="text-xs px-2 py-0.5 rounded-full" 
+              :class="editingArticle.published ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'">
+              {{ editingArticle.published ? '已发布' : '草稿' }}
+            </span>
+          </h3>
+          <button @click="showArticleModal = false" class="text-dark-400 hover:text-white text-xl p-1">✕</button>
+        </div>
+        
+        <!-- 弹窗内容 -->
+        <div class="flex-1 overflow-y-auto p-6">
+          <form @submit.prevent="saveArticleForm" class="space-y-5">
+            <!-- 标题和 Slug 同行 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-dark-300 mb-1.5">标题 *</label>
+                <input v-model="articleForm.title" required 
+                  class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-white focus:border-primary-500 focus:outline-none transition-colors" 
+                  placeholder="输入文章标题" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-dark-300 mb-1.5">
+                  URL 标识 (slug)
+                  <span class="text-dark-500 font-normal ml-1">可选</span>
+                </label>
+                <input v-model="articleForm.slug" 
+                  class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-white focus:border-primary-500 focus:outline-none transition-colors" 
+                  placeholder="留空自动根据标题生成" />
+              </div>
             </div>
-            <textarea 
-              ref="contentTextarea"
-              v-model="articleForm.content" 
-              required 
-              rows="14" 
-              class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white font-mono text-sm resize-none"
-              placeholder="支持 Markdown 格式，可点击上方按钮插入图片"
-            ></textarea>
-          </div>
-          <div class="flex flex-wrap items-center gap-4">
-            <div class="flex items-center gap-2">
-              <input v-model="articleForm.published" type="checkbox" id="published" class="rounded" />
-              <label for="published" class="text-dark-300">立即发布</label>
+            
+            <!-- 摘要和标签同行 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-dark-300 mb-1.5">摘要 <span class="text-dark-500 font-normal">可选</span></label>
+                <input v-model="articleForm.summary" 
+                  class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-white focus:border-primary-500 focus:outline-none transition-colors" 
+                  placeholder="简短描述文章内容" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-dark-300 mb-1.5">标签 <span class="text-dark-500 font-normal">逗号分隔</span></label>
+                <input v-model="articleForm.tagsInput" 
+                  class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2.5 text-white focus:border-primary-500 focus:outline-none transition-colors" 
+                  placeholder="公告, 教程, 技术" />
+              </div>
             </div>
-            <div v-if="settings.ai_available" class="flex items-center gap-2">
-              <input v-model="articleForm.generateAISummary" type="checkbox" id="generateAI" class="rounded" />
-              <label for="generateAI" class="text-dark-300">🤖 生成 AI 总结</label>
+            
+            <!-- 内容编辑器 -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="block text-sm font-medium text-dark-300">
+                  内容 *
+                  <span class="text-dark-500 font-normal ml-1">支持 Markdown</span>
+                </label>
+                <ImageUpload @uploaded="onImageUploaded" />
+              </div>
+              <textarea 
+                ref="contentTextarea"
+                v-model="articleForm.content" 
+                required 
+                rows="16" 
+                class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-3 text-white font-mono text-sm resize-none focus:border-primary-500 focus:outline-none transition-colors"
+                placeholder="使用 Markdown 格式编写文章内容...&#10;&#10;# 标题&#10;## 子标题&#10;&#10;正文内容...&#10;&#10;```javascript&#10;// 代码块&#10;```"
+              ></textarea>
+              <p class="text-xs text-dark-500 mt-1">💡 提示：可点击右上角按钮上传图片，自动插入 Markdown 格式</p>
             </div>
-          </div>
-          <div class="flex justify-end gap-3 pt-4">
-            <button type="button" @click="showArticleModal = false" class="px-4 py-2 text-dark-400 hover:text-white">
-              取消
-            </button>
-            <button type="submit" :disabled="savingArticle" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-500/50 text-white rounded-lg">
-              {{ savingArticle ? '保存中...' : '保存' }}
-            </button>
-          </div>
-        </form>
+            
+            <!-- 发布选项 -->
+            <div class="flex flex-wrap items-center gap-6 pt-2 pb-4 border-t border-dark-700">
+              <label class="flex items-center gap-2 cursor-pointer group">
+                <input v-model="articleForm.published" type="checkbox" 
+                  class="w-4 h-4 rounded border-dark-600 text-primary-500 focus:ring-primary-500 focus:ring-offset-dark-800" />
+                <span class="text-dark-300 group-hover:text-white transition-colors">
+                  {{ articleForm.published ? '✓ 立即发布' : '保存为草稿' }}
+                </span>
+              </label>
+              <label v-if="settings.ai_available" class="flex items-center gap-2 cursor-pointer group">
+                <input v-model="articleForm.generateAISummary" type="checkbox" 
+                  class="w-4 h-4 rounded border-dark-600 text-primary-500 focus:ring-primary-500 focus:ring-offset-dark-800" />
+                <span class="text-dark-300 group-hover:text-white transition-colors">🤖 生成 AI 总结</span>
+              </label>
+            </div>
+          </form>
+        </div>
+        
+        <!-- 弹窗底部 -->
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-dark-700 bg-dark-900/50">
+          <button type="button" @click="showArticleModal = false" 
+            class="px-5 py-2.5 text-dark-400 hover:text-white hover:bg-dark-700 rounded-lg transition-colors">
+            取消
+          </button>
+          <button @click="saveArticleForm" :disabled="savingArticle" 
+            class="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-500/50 text-white rounded-lg transition-colors flex items-center gap-2">
+            <span v-if="savingArticle" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+            {{ savingArticle ? '保存中...' : (articleForm.published ? '发布文章' : '保存草稿') }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -408,6 +459,7 @@ const settingsForm = ref({ gemini_api_key: '' })
 const savingSettings = ref(false)
 const testingAI = ref(false)
 const aiTestResult = ref(null)
+const settingsSaveResult = ref(null) // 新增：保存结果提示
 
 // 链接表单
 const showLinkModal = ref(false)
@@ -441,8 +493,10 @@ const fetchData = async () => {
       stats.value.links = linksData.data.length
     }
 
-    // 获取文章
-    const articlesRes = await fetch(`${API_URL}/api/v1/articles?limit=50`)
+    // 获取文章（管理员接口，包含草稿）
+    const articlesRes = await fetch(`${API_URL}/api/v1/articles/admin/all?limit=50`, {
+      headers: authStore.getAuthHeaders()
+    })
     const articlesData = await articlesRes.json()
     if (articlesData.success) {
       articles.value = articlesData.data
@@ -592,6 +646,7 @@ const regenerateSummary = async (article) => {
 // 设置操作
 const saveSettings = async () => {
   savingSettings.value = true
+  settingsSaveResult.value = null
   try {
     const res = await fetch(`${API_URL}/api/v1/settings`, {
       method: 'PUT',
@@ -603,15 +658,17 @@ const saveSettings = async () => {
     })
     const data = await res.json()
     if (res.ok) {
-      alert('设置已保存')
+      settingsSaveResult.value = { success: true, message: '✓ 设置已保存成功！' }
       settings.value.ai_available = data.data?.ai_available || false
       settingsForm.value.gemini_api_key = ''
       await fetchData()
+      // 3秒后清除提示
+      setTimeout(() => { settingsSaveResult.value = null }, 3000)
     } else {
-      alert(data.error || '保存失败')
+      settingsSaveResult.value = { success: false, message: '✗ ' + (data.error || '保存失败') }
     }
   } catch (err) {
-    alert('保存失败: ' + err.message)
+    settingsSaveResult.value = { success: false, message: '✗ 保存失败: ' + err.message }
   } finally {
     savingSettings.value = false
   }

@@ -5,7 +5,7 @@ const aiService = require('../services/ai')
 
 const router = express.Router()
 
-// GET /articles
+// GET /articles - 公开接口，只返回已发布文章
 router.get('/', async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1
@@ -19,6 +19,32 @@ router.get('/', async (req, res, next) => {
     )
     
     const countResult = await db.query('SELECT COUNT(*) FROM articles WHERE published = true')
+    const total = parseInt(countResult.rows[0].count)
+    
+    res.json({
+      success: true,
+      data: result.rows,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// GET /articles/admin/all - 管理员接口，返回所有文章（包括草稿）
+router.get('/admin/all', authMiddleware, async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1
+    const limit = Math.min(parseInt(req.query.limit) || 50, 100)
+    const offset = (page - 1) * limit
+
+    const result = await db.query(
+      `SELECT id, title, slug, summary, ai_summary, tags, view_count, published, created_at, updated_at
+       FROM articles ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+      [limit, offset]
+    )
+    
+    const countResult = await db.query('SELECT COUNT(*) FROM articles')
     const total = parseInt(countResult.rows[0].count)
     
     res.json({
