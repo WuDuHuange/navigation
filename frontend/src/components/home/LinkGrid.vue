@@ -7,10 +7,10 @@
         :key="cat"
         @click="activeCategory = cat === '全部' ? null : cat"
         :class="[
-          'px-4 py-2 rounded-full text-sm font-medium transition-all duration-200',
+          'px-4 py-2 text-sm font-medium transition-all duration-200 rounded-sm border',
           (activeCategory === null && cat === '全部') || activeCategory === cat
-            ? 'bg-primary-500 text-white'
-            : 'bg-dark-800 text-dark-300 hover:bg-dark-700'
+            ? 'bg-primary-500 text-white border-primary-500'
+            : 'bg-white text-ink-600 border-paper-400 hover:border-primary-500 hover:text-primary-500'
         ]"
       >
         {{ cat }}
@@ -18,7 +18,7 @@
     </div>
 
     <!-- 卡片网格 -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
       <LinkCard 
         v-for="link in filteredLinks" 
         :key="link.id" 
@@ -28,8 +28,8 @@
 
     <!-- 空状态 -->
     <div v-if="filteredLinks.length === 0" class="text-center py-16">
-      <div class="text-6xl mb-4">🔍</div>
-      <p class="text-dark-400">暂无导航链接</p>
+      <div class="seal-icon-lg mx-auto mb-4">空</div>
+      <p class="text-ink-400">暂无导航链接</p>
     </div>
   </div>
 </template>

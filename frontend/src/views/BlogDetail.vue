@@ -1,15 +1,15 @@
 <template>
-  <div v-if="article">
+  <div v-if="article" class="content-left">
     <!-- 文章头部 -->
     <header class="mb-8">
-      <router-link to="/blog" class="text-primary-400 hover:text-primary-300 text-sm mb-4 inline-flex items-center gap-1">
+      <router-link to="/blog" class="text-primary-500 hover:text-primary-600 text-sm mb-4 inline-flex items-center gap-1 transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
         返回文章列表
       </router-link>
-      <h1 class="text-3xl md:text-4xl font-bold text-white mt-4 mb-4">{{ article.title }}</h1>
-      <div class="flex flex-wrap items-center gap-4 text-sm text-dark-400">
+      <h1 class="text-3xl md:text-4xl font-bold text-ink-800 mt-4 mb-4">{{ article.title }}</h1>
+      <div class="flex flex-wrap items-center gap-4 text-sm text-ink-400">
         <span>{{ formatDate(article.created_at) }}</span>
         <span>•</span>
         <span>{{ article.view_count || 0 }} 阅读</span>
@@ -17,7 +17,7 @@
           <span 
             v-for="tag in article.tags" 
             :key="tag"
-            class="px-2 py-0.5 bg-primary-500/10 text-primary-400 rounded-full"
+            class="tag"
           >
             {{ tag }}
           </span>
@@ -29,30 +29,33 @@
     <AISummary v-if="article.ai_summary" :summary="article.ai_summary" />
 
     <!-- 文章内容 -->
-    <article class="markdown-content prose prose-invert max-w-none" v-html="renderedContent"></article>
+    <article class="markdown-content prose max-w-none" v-html="renderedContent"></article>
 
     <!-- 分隔线 -->
-    <hr class="border-dark-700 my-12" />
+    <hr class="border-paper-400 my-12" />
 
     <!-- 评论区 -->
     <section>
-      <h2 class="text-2xl font-bold text-white mb-8">💬 评论 ({{ comments.length }})</h2>
+      <h2 class="text-2xl font-bold text-ink-800 mb-8 flex items-center gap-3">
+        <span class="seal-icon">评</span>
+        <span>评论 ({{ comments.length }})</span>
+      </h2>
 
       <!-- 发表评论 -->
-      <form @submit.prevent="submitComment" class="bg-dark-800/50 border border-dark-700 rounded-xl p-6 mb-8">
+      <form @submit.prevent="submitComment" class="card p-6 mb-8">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <input 
             v-model="commentForm.nickname"
             type="text"
             placeholder="昵称"
             required
-            class="bg-dark-900 border border-dark-600 rounded-lg px-4 py-2 text-white placeholder-dark-500 focus:border-primary-500 focus:outline-none transition-colors"
+            class="px-4 py-2"
           />
           <input 
             v-model="commentForm.email"
             type="email"
             placeholder="邮箱（选填）"
-            class="bg-dark-900 border border-dark-600 rounded-lg px-4 py-2 text-white placeholder-dark-500 focus:border-primary-500 focus:outline-none transition-colors"
+            class="px-4 py-2"
           />
         </div>
         <textarea 
@@ -60,12 +63,12 @@
           placeholder="写下你的评论..."
           rows="4"
           required
-          class="w-full bg-dark-900 border border-dark-600 rounded-lg px-4 py-2 text-white placeholder-dark-500 focus:border-primary-500 focus:outline-none transition-colors resize-none mb-4"
+          class="w-full px-4 py-2 resize-none mb-4"
         ></textarea>
         <button 
           type="submit"
           :disabled="isSubmitting"
-          class="px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+          class="btn-primary disabled:opacity-50"
         >
           {{ isSubmitting ? '提交中...' : '发表评论' }}
         </button>
@@ -76,17 +79,17 @@
         <div 
           v-for="comment in comments" 
           :key="comment.id"
-          class="bg-dark-800/30 border border-dark-700 rounded-xl p-4"
+          class="card p-4"
         >
           <div class="flex items-center justify-between mb-2">
-            <span class="font-medium text-white">{{ comment.nickname }}</span>
-            <span class="text-dark-500 text-sm">{{ formatDate(comment.created_at) }}</span>
+            <span class="font-medium text-ink-800">{{ comment.nickname }}</span>
+            <span class="text-ink-400 text-sm">{{ formatDate(comment.created_at) }}</span>
           </div>
-          <p class="text-dark-300">{{ comment.content }}</p>
+          <p class="text-ink-600">{{ comment.content }}</p>
         </div>
       </div>
 
-      <div v-else class="text-center py-8 text-dark-400">
+      <div v-else class="text-center py-8 text-ink-400">
         暂无评论，来说两句吧 ~
       </div>
     </section>
@@ -94,8 +97,8 @@
 
   <!-- 加载状态 -->
   <div v-else class="text-center py-20">
-    <div class="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-    <p class="text-dark-400">加载中...</p>
+    <div class="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+    <p class="text-ink-400">加载中...</p>
   </div>
 </template>
 
@@ -143,9 +146,7 @@ const submitComment = async () => {
     const data = await res.json()
     
     if (res.ok) {
-      // 显示成功提示
       alert(data.message || '评论已提交，等待审核')
-      // 清空表单
       commentForm.value = { nickname: '', email: '', content: '' }
     } else {
       alert(data.error || '提交失败')
@@ -167,10 +168,8 @@ const fetchArticle = async () => {
     
     if (res.ok && data.success) {
       article.value = data.data
-      // 获取评论
       fetchComments()
     } else {
-      // 使用模拟数据（用于演示）
       article.value = {
         id: 1,
         slug,
@@ -192,14 +191,10 @@ const fetchArticle = async () => {
 console.log('Hello, World!')
 \`\`\`
 
-## 图片示例
-
-支持在文章中插入图片，图片会自动压缩优化。
-
 感谢访问！
 `,
         summary: '导航页项目介绍与使用说明',
-        ai_summary: '这是一篇关于导航页项目的介绍文章，主要展示了 Markdown 渲染功能，包括标题、列表、代码块等基本语法的支持，以及图片插入和 AI 智能总结等特色功能。',
+        ai_summary: '这是一篇关于导航页项目的介绍文章，展示了 Markdown 渲染功能和 AI 智能总结等特色功能。',
         tags: ['公告', '教程'],
         view_count: 42,
         created_at: '2025-12-07T00:00:00Z'
