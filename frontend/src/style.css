@@ -37,7 +37,7 @@ body {
 /* ========== 主背景 - 带灵梦剪影 ========== */
 .main-bg {
   background-color: #F5F5F5;
-  background-image: url('/assets/background.png');
+  background-image: url('/assets/Background.png');
   background-repeat: no-repeat;
   background-position: right bottom;
   background-size: auto 90vh;
@@ -74,10 +74,16 @@ body {
 }
 
 .seal-icon-lg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 3.5rem;
   height: 3.5rem;
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+  color: var(--primary);
+  font-weight: 700;
   font-size: 1.125rem;
-  border-width: 2px;
 }
 
 /* ========== 按钮样式 ========== */
