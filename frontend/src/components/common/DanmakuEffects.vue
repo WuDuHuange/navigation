@@ -109,18 +109,50 @@ const handleMouseMove = (e) => {
   updateParallax(e.clientX, e.clientY)
 }
 
-// 背景视差效果
+// 背景视差效果 - 使用 requestAnimationFrame 平滑更新
+let parallaxRAF = null
+let targetX = 0
+let targetY = 0
+let currentX = 0
+let currentY = 0
+let targetRotateY = 0
+let targetRotateX = 0
+let currentRotateY = 0
+let currentRotateX = 0
+
+const lerp = (start, end, factor) => start + (end - start) * factor
+
 const updateParallax = (mouseX, mouseY) => {
   const centerX = window.innerWidth / 2
   const centerY = window.innerHeight / 2
   
-  // 计算偏移量（反向移动）
-  const offsetX = (mouseX - centerX) / centerX * -20
-  const offsetY = (mouseY - centerY) / centerY * -10
+  // 计算目标值（反向移动 + 加大幅度）
+  const normalizedX = (mouseX - centerX) / centerX
+  const normalizedY = (mouseY - centerY) / centerY
+  
+  targetX = normalizedX * -35
+  targetY = normalizedY * -20
+  
+  // 添加轻微旋转增强景深
+  targetRotateY = normalizedX * -2
+  targetRotateX = normalizedY * 1.5
+}
+
+const animateParallax = () => {
+  // 使用线性插值平滑过渡（0.08 = 响应速度，越大越快）
+  currentX = lerp(currentX, targetX, 0.12)
+  currentY = lerp(currentY, targetY, 0.12)
+  currentRotateY = lerp(currentRotateY, targetRotateY, 0.1)
+  currentRotateX = lerp(currentRotateX, targetRotateX, 0.1)
   
   // 更新 CSS 变量
-  document.documentElement.style.setProperty('--parallax-x', `${offsetX}px`)
-  document.documentElement.style.setProperty('--parallax-y', `${offsetY}px`)
+  const root = document.documentElement
+  root.style.setProperty('--parallax-x', `${currentX}px`)
+  root.style.setProperty('--parallax-y', `${currentY}px`)
+  root.style.setProperty('--parallax-rotate-y', `${currentRotateY}deg`)
+  root.style.setProperty('--parallax-rotate-x', `${currentRotateX}deg`)
+  
+  parallaxRAF = requestAnimationFrame(animateParallax)
 }
 
 // ===== Konami Code 彩蛋 =====
@@ -179,12 +211,14 @@ onMounted(() => {
   window.addEventListener('mousemove', handleMouseMove)
   window.addEventListener('keydown', handleKeyDown)
   updateParticles()
+  animateParallax() // 启动视差动画循环
 })
 
 onUnmounted(() => {
   window.removeEventListener('mousemove', handleMouseMove)
   window.removeEventListener('keydown', handleKeyDown)
   if (rafId) cancelAnimationFrame(rafId)
+  if (parallaxRAF) cancelAnimationFrame(parallaxRAF)
 })
 </script>
 
