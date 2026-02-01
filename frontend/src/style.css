@@ -14,49 +14,83 @@ body {
   font-family: 'HarmonyOS Sans SC', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #F5F5F5;
+  background-color: #FDFEFE;
   color: #2C2C2C;
 }
 
 /* ========== 明亮御守风主题变量 ========== */
 :root {
-  --bg-primary: #F5F5F5;
+  --bg-primary: #FDFEFE;
   --bg-secondary: #FFFFFF;
   --bg-tertiary: #FAFAFA;
   --text-primary: #2C2C2C;
   --text-secondary: #5c544a;
   --text-muted: #7a7167;
   --border-color: #E0DCD6;
-  --card-bg: rgba(255, 255, 255, 0.9);
+  --card-bg: rgba(255, 255, 255, 0.95);
   --card-border: #D9333F;
   --primary: #D9333F;
   --primary-light: #f87171;
   --shadow-color: rgba(0, 0, 0, 0.06);
+  /* 视差效果变量 */
+  --parallax-x: 0px;
+  --parallax-y: 0px;
 }
 
-/* ========== 主背景 - 带灵梦剪影 ========== */
+/* ========== 主背景 - 带灵梦剪影和视差效果 ========== */
 .main-bg {
-  background-color: #F5F5F5;
-  background-image: url('/assets/Background.png');
-  background-repeat: no-repeat;
-  background-position: right bottom;
-  background-size: auto 90vh;
-  background-attachment: fixed;
+  background-color: #FDFEFE;
+  position: relative;
   min-height: 100vh;
 }
 
-/* ========== 符卡风格卡片 ========== */
+.main-bg::before {
+  content: '';
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/assets/Background.png');
+  background-repeat: no-repeat;
+  background-position: calc(100% + var(--parallax-x)) calc(100% + var(--parallax-y));
+  background-size: auto 90vh;
+  pointer-events: none;
+  z-index: 0;
+  transition: background-position 0.1s ease-out;
+}
+
+/* ========== 符卡风格卡片 - 御札效果 ========== */
 .card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 3px;
   box-shadow: 0 2px 8px var(--shadow-color);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+  will-change: transform, box-shadow;
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(217, 51, 63, 0.12);
+  transform: translateY(-4px) rotateX(2deg) rotateY(-2deg);
+  box-shadow: 
+    0 8px 24px rgba(217, 51, 63, 0.15),
+    0 0 0 1px rgba(217, 51, 63, 0.3),
+    0 0 30px rgba(217, 51, 63, 0.1),
+    inset 0 0 20px rgba(217, 51, 63, 0.03);
+}
+
+/* 3D 倾斜效果类 */
+.card-tilt {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.card-tilt:hover {
+  box-shadow: 
+    0 20px 40px rgba(217, 51, 63, 0.2),
+    0 0 0 2px rgba(217, 51, 63, 0.4),
+    0 0 60px rgba(217, 51, 63, 0.15);
 }
 
 /* ========== 印章风格图标 ========== */

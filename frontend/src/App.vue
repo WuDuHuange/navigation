@@ -9,12 +9,15 @@
       </router-view>
     </main>
     <Footer />
+    <!-- 弹幕美学特效 -->
+    <DanmakuEffects />
   </div>
 </template>
 
 <script setup>
 import NavHeader from './components/layout/NavHeader.vue'
 import Footer from './components/layout/Footer.vue'
+import DanmakuEffects from './components/common/DanmakuEffects.vue'
 </script>
 
 <style scoped>
