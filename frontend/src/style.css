@@ -52,10 +52,12 @@ body {
   bottom: -5%;
   width: 110%;
   height: 110%;
-  background-image: url('/assets/Background.png');
-  background-repeat: no-repeat;
-  background-position: right bottom;
-  background-size: auto 95vh;
+  /* 优先使用 newBG.png，若不存在则回退到 Background.png */
+  background-image: url('/assets/newBG.png'), url('/assets/Background.png');
+  background-repeat: no-repeat, no-repeat;
+  background-position: right bottom, right bottom;
+  /* 尝试自适应：首图使用 contain 保证完整展示，回退图维持原先尺寸 */
+  background-size: contain, auto 95vh;
   pointer-events: none;
   z-index: 0;
   transform: 
@@ -65,6 +67,14 @@ body {
     rotateY(var(--parallax-rotate-y, 0deg));
   transform-origin: right bottom;
   will-change: transform;
+}
+
+/* 小屏幕上减弱或隐藏背景以免遮挡内容 */
+@media (max-width: 900px) {
+  .main-bg::before {
+    opacity: 0.6;
+    background-size: contain, auto 60vh;
+  }
 }
 
 /* ========== 符卡风格卡片 - 御札效果 ========== */
