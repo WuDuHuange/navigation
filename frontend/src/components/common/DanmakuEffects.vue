@@ -115,8 +115,10 @@ let targetX = 0
 let targetY = 0
 let currentX = 0
 let currentY = 0
-let targetRotateZ = 0
-let currentRotateZ = 0
+let targetRotateX = 0
+let targetRotateY = 0
+let currentRotateX = 0
+let currentRotateY = 0
 
 const lerp = (start, end, factor) => start + (end - start) * factor
 
@@ -131,21 +133,24 @@ const updateParallax = (mouseX, mouseY) => {
   targetX = normalizedX * -40
   targetY = normalizedY * -25
   
-  // Z 轴旋转 - 平面倾斜效果（±3°）
-  targetRotateZ = normalizedX * 3
+  // 3D 透视旋转 - 立体效果
+  targetRotateY = normalizedX * 8    // 左右看：鼠标右移，看到灵梦左侧
+  targetRotateX = normalizedY * -6   // 上下看：鼠标下移，看到灵梦顶部
 }
 
 const animateParallax = () => {
   // 使用线性插值平滑过渡
   currentX = lerp(currentX, targetX, 0.1)
   currentY = lerp(currentY, targetY, 0.1)
-  currentRotateZ = lerp(currentRotateZ, targetRotateZ, 0.08)
+  currentRotateX = lerp(currentRotateX, targetRotateX, 0.08)
+  currentRotateY = lerp(currentRotateY, targetRotateY, 0.08)
   
   // 更新 CSS 变量
   const root = document.documentElement
   root.style.setProperty('--parallax-x', `${currentX}px`)
   root.style.setProperty('--parallax-y', `${currentY}px`)
-  root.style.setProperty('--parallax-rotate-z', `${currentRotateZ}deg`)
+  root.style.setProperty('--parallax-rotate-x', `${currentRotateX}deg`)
+  root.style.setProperty('--parallax-rotate-y', `${currentRotateY}deg`)
   
   parallaxRAF = requestAnimationFrame(animateParallax)
 }

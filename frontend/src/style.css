@@ -59,8 +59,10 @@ body {
   pointer-events: none;
   z-index: 0;
   transform: 
+    perspective(1000px)
     translate3d(var(--parallax-x, 0), var(--parallax-y, 0), 0)
-    rotate(var(--parallax-rotate-z, 0deg));
+    rotateX(var(--parallax-rotate-x, 0deg))
+    rotateY(var(--parallax-rotate-y, 0deg));
   transform-origin: right bottom;
   will-change: transform;
 }
