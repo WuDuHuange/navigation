@@ -115,11 +115,7 @@ let targetX = 0
 let targetY = 0
 let currentX = 0
 let currentY = 0
-let targetRotateY = 0
-let targetRotateX = 0
 let targetRotateZ = 0
-let currentRotateY = 0
-let currentRotateX = 0
 let currentRotateZ = 0
 
 const lerp = (start, end, factor) => start + (end - start) * factor
@@ -128,33 +124,27 @@ const updateParallax = (mouseX, mouseY) => {
   const centerX = window.innerWidth / 2
   const centerY = window.innerHeight / 2
   
-  // 计算目标值（反向移动 + 加大幅度）
+  // 计算目标值（反向移动）
   const normalizedX = (mouseX - centerX) / centerX
   const normalizedY = (mouseY - centerY) / centerY
   
   targetX = normalizedX * -40
   targetY = normalizedY * -25
   
-  // 增强旋转效果 - 更明显的 3D 感
-  targetRotateY = normalizedX * -4      // 左右偏转（加大到 ±4°）
-  targetRotateX = normalizedY * 3       // 俯仰偏转（加大到 ±3°）
-  targetRotateZ = normalizedX * 1.5     // 轻微倾斜（新增 Z 轴旋转 ±1.5°）
+  // Z 轴旋转 - 平面倾斜效果（±3°）
+  targetRotateZ = normalizedX * 3
 }
 
 const animateParallax = () => {
   // 使用线性插值平滑过渡
   currentX = lerp(currentX, targetX, 0.1)
   currentY = lerp(currentY, targetY, 0.1)
-  currentRotateY = lerp(currentRotateY, targetRotateY, 0.08)
-  currentRotateX = lerp(currentRotateX, targetRotateX, 0.08)
-  currentRotateZ = lerp(currentRotateZ, targetRotateZ, 0.06)
+  currentRotateZ = lerp(currentRotateZ, targetRotateZ, 0.08)
   
   // 更新 CSS 变量
   const root = document.documentElement
   root.style.setProperty('--parallax-x', `${currentX}px`)
   root.style.setProperty('--parallax-y', `${currentY}px`)
-  root.style.setProperty('--parallax-rotate-y', `${currentRotateY}deg`)
-  root.style.setProperty('--parallax-rotate-x', `${currentRotateX}deg`)
   root.style.setProperty('--parallax-rotate-z', `${currentRotateZ}deg`)
   
   parallaxRAF = requestAnimationFrame(animateParallax)

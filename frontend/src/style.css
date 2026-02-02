@@ -60,10 +60,7 @@ body {
   z-index: 0;
   transform: 
     translate3d(var(--parallax-x, 0), var(--parallax-y, 0), 0)
-    rotateY(var(--parallax-rotate-y, 0deg))
-    rotateX(var(--parallax-rotate-x, 0deg))
-    rotateZ(var(--parallax-rotate-z, 0deg))
-    scale(var(--parallax-scale, 1));
+    rotate(var(--parallax-rotate-z, 0deg));
   transform-origin: right bottom;
   will-change: transform;
 }
