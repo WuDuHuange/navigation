@@ -213,6 +213,18 @@ onMounted(() => {
   window.addEventListener('keydown', handleKeyDown)
   updateParticles()
   animateParallax() // 启动视差动画循环
+
+  // 检测 newBG.png 是否存在：若存在则优先使用并在顶部留空
+  const img = new Image()
+  img.onload = () => {
+    document.documentElement.classList.add('has-newbg')
+    document.documentElement.style.setProperty('--bg-top-gap', '6vh')
+  }
+  img.onerror = () => {
+    document.documentElement.classList.add('no-newbg')
+  }
+  // 带时间戳避免被缓存影响检测
+  img.src = '/assets/newBG.png?ts=' + Date.now()
 })
 
 onUnmounted(() => {

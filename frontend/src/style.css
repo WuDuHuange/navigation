@@ -52,28 +52,45 @@ body {
   bottom: -5%;
   width: 110%;
   height: 110%;
-  /* 优先使用 newBG.png，若不存在则回退到 Background.png */
-  background-image: url('/assets/newBG.png'), url('/assets/Background.png');
-  background-repeat: no-repeat, no-repeat;
-  background-position: right bottom, right bottom;
-  /* 尝试自适应：首图使用 contain 保证完整展示，回退图维持原先尺寸 */
-  background-size: contain, auto 95vh;
   pointer-events: none;
   z-index: 0;
+  transform-origin: right bottom;
+  will-change: transform;
+  /* 默认不设置图片，运行时由 JS 根据是否存在 newBG.png 添加类来决定 */
+}
+
+/* 当存在 newBG.png 时使用它（优先，且保持完整展示，右侧留出顶部间距） */
+.has-newbg .main-bg::before {
+  background-image: url('/assets/newBG.png');
+  background-repeat: no-repeat;
+  background-position: right calc(var(--bg-top-gap, 6vh));
+  background-size: contain;
   transform: 
     perspective(1000px)
     translate3d(var(--parallax-x, 0), var(--parallax-y, 0), 0)
     rotateX(var(--parallax-rotate-x, 0deg))
     rotateY(var(--parallax-rotate-y, 0deg));
-  transform-origin: right bottom;
-  will-change: transform;
+}
+
+/* 回退到旧背景（保持原来的样式） */
+.no-newbg .main-bg::before {
+  background-image: url('/assets/Background.png');
+  background-repeat: no-repeat;
+  background-position: right bottom;
+  background-size: auto 95vh;
+  transform: 
+    perspective(1000px)
+    translate3d(var(--parallax-x, 0), var(--parallax-y, 0), 0)
+    rotateX(var(--parallax-rotate-x, 0deg))
+    rotateY(var(--parallax-rotate-y, 0deg));
 }
 
 /* 小屏幕上减弱或隐藏背景以免遮挡内容 */
 @media (max-width: 900px) {
-  .main-bg::before {
+  .has-newbg .main-bg::before,
+  .no-newbg .main-bg::before {
     opacity: 0.6;
-    background-size: contain, auto 60vh;
+    background-size: contain;
   }
 }
 
