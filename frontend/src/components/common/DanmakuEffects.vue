@@ -130,20 +130,21 @@ const updateParallax = (mouseX, mouseY) => {
   const normalizedX = (mouseX - centerX) / centerX
   const normalizedY = (mouseY - centerY) / centerY
   
-  targetX = normalizedX * -40
-  targetY = normalizedY * -25
+  // 缩小位移幅度，避免过度移动
+  targetX = normalizedX * -20
+  targetY = normalizedY * -12
   
-  // 3D 透视旋转 - 立体效果
-  targetRotateY = normalizedX * 8    // 左右看：鼠标右移，看到灵梦左侧
-  targetRotateX = normalizedY * -6   // 上下看：鼠标下移，看到灵梦顶部
+  // 3D 透视旋转 - 缩小角度以获得更细腻的立体感
+  targetRotateY = normalizedX * 4    // 左右偏转 ±4°
+  targetRotateX = normalizedY * -2   // 上下俯仰 ±2°
 }
 
 const animateParallax = () => {
-  // 使用线性插值平滑过渡
-  currentX = lerp(currentX, targetX, 0.1)
-  currentY = lerp(currentY, targetY, 0.1)
-  currentRotateX = lerp(currentRotateX, targetRotateX, 0.08)
-  currentRotateY = lerp(currentRotateY, targetRotateY, 0.08)
+  // 使用线性插值平滑过渡（略微提高响应，让感觉更灵活但不突兀）
+  currentX = lerp(currentX, targetX, 0.12)
+  currentY = lerp(currentY, targetY, 0.12)
+  currentRotateX = lerp(currentRotateX, targetRotateX, 0.09)
+  currentRotateY = lerp(currentRotateY, targetRotateY, 0.09)
   
   // 更新 CSS 变量
   const root = document.documentElement
