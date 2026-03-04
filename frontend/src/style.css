@@ -32,66 +32,14 @@ body {
   --primary: #D9333F;
   --primary-light: #f87171;
   --shadow-color: rgba(0, 0, 0, 0.06);
-  /* 视差效果变量 */
-  --parallax-x: 0px;
-  --parallax-y: 0px;
 }
 
-/* ========== 主背景 - 带灵梦剪影和视差效果 ========== */
+/* ========== 主背景 ========== */
 .main-bg {
   background-color: #FDFEFE;
   position: relative;
   min-height: 100vh;
   overflow: hidden;
-}
-
-.main-bg::before {
-  content: '';
-  position: fixed;
-  right: -5%;
-  bottom: -5%;
-  width: 110%;
-  height: 110%;
-  pointer-events: none;
-  z-index: 0;
-  transform-origin: right bottom;
-  will-change: transform;
-  /* 默认不设置图片，运行时由 JS 根据是否存在 newBG.png 添加类来决定 */
-}
-
-/* 当存在 newBG.png 时使用它（优先，且保持完整展示，右侧留出顶部间距） */
-.has-newbg .main-bg::before {
-  background-image: url('/assets/newBG.png');
-  background-repeat: no-repeat;
-  background-position: right calc(var(--bg-top-gap, 6vh));
-  background-size: contain;
-  transform: 
-    perspective(1000px)
-    translate3d(var(--parallax-x, 0), var(--parallax-y, 0), 0)
-    rotateX(var(--parallax-rotate-x, 0deg))
-    rotateY(var(--parallax-rotate-y, 0deg));
-}
-
-/* 回退到旧背景（保持原来的样式） */
-.no-newbg .main-bg::before {
-  background-image: url('/assets/Background.png');
-  background-repeat: no-repeat;
-  background-position: right bottom;
-  background-size: auto 95vh;
-  transform: 
-    perspective(1000px)
-    translate3d(var(--parallax-x, 0), var(--parallax-y, 0), 0)
-    rotateX(var(--parallax-rotate-x, 0deg))
-    rotateY(var(--parallax-rotate-y, 0deg));
-}
-
-/* 小屏幕上减弱或隐藏背景以免遮挡内容 */
-@media (max-width: 900px) {
-  .has-newbg .main-bg::before,
-  .no-newbg .main-bg::before {
-    opacity: 0.6;
-    background-size: contain;
-  }
 }
 
 /* ========== 符卡风格卡片 - 御札效果 ========== */

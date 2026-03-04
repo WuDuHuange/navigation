@@ -9,6 +9,8 @@
       </router-view>
     </main>
     <Footer />
+    <!-- 阴阳玉粒子背景 -->
+    <YinYangParticles />
     <!-- 弹幕美学特效 -->
     <DanmakuEffects />
   </div>
@@ -17,6 +19,7 @@
 <script setup>
 import NavHeader from './components/layout/NavHeader.vue'
 import Footer from './components/layout/Footer.vue'
+import YinYangParticles from './components/common/YinYangParticles.vue'
 import DanmakuEffects from './components/common/DanmakuEffects.vue'
 </script>
 

@@ -105,55 +105,6 @@ const handleMouseMove = (e) => {
     lastY = e.clientY
   }
   
-  // 更新背景视差
-  updateParallax(e.clientX, e.clientY)
-}
-
-// 背景视差效果 - 使用 requestAnimationFrame 平滑更新
-let parallaxRAF = null
-let targetX = 0
-let targetY = 0
-let currentX = 0
-let currentY = 0
-let targetRotateX = 0
-let targetRotateY = 0
-let currentRotateX = 0
-let currentRotateY = 0
-
-const lerp = (start, end, factor) => start + (end - start) * factor
-
-const updateParallax = (mouseX, mouseY) => {
-  const centerX = window.innerWidth / 2
-  const centerY = window.innerHeight / 2
-  
-  // 计算目标值（反向移动）
-  const normalizedX = (mouseX - centerX) / centerX
-  const normalizedY = (mouseY - centerY) / centerY
-  
-  // 缩小位移幅度，避免过度移动
-  targetX = normalizedX * -20
-  targetY = normalizedY * -12
-  
-  // 3D 透视旋转 - 缩小角度以获得更细腻的立体感
-  targetRotateY = normalizedX * 4    // 左右偏转 ±4°
-  targetRotateX = normalizedY * -2   // 上下俯仰 ±2°
-}
-
-const animateParallax = () => {
-  // 使用线性插值平滑过渡（略微提高响应，让感觉更灵活但不突兀）
-  currentX = lerp(currentX, targetX, 0.12)
-  currentY = lerp(currentY, targetY, 0.12)
-  currentRotateX = lerp(currentRotateX, targetRotateX, 0.09)
-  currentRotateY = lerp(currentRotateY, targetRotateY, 0.09)
-  
-  // 更新 CSS 变量
-  const root = document.documentElement
-  root.style.setProperty('--parallax-x', `${currentX}px`)
-  root.style.setProperty('--parallax-y', `${currentY}px`)
-  root.style.setProperty('--parallax-rotate-x', `${currentRotateX}deg`)
-  root.style.setProperty('--parallax-rotate-y', `${currentRotateY}deg`)
-  
-  parallaxRAF = requestAnimationFrame(animateParallax)
 }
 
 // ===== Konami Code 彩蛋 =====
@@ -212,26 +163,12 @@ onMounted(() => {
   window.addEventListener('mousemove', handleMouseMove)
   window.addEventListener('keydown', handleKeyDown)
   updateParticles()
-  animateParallax() // 启动视差动画循环
-
-  // 检测 newBG.png 是否存在：若存在则优先使用并在顶部留空
-  const img = new Image()
-  img.onload = () => {
-    document.documentElement.classList.add('has-newbg')
-    document.documentElement.style.setProperty('--bg-top-gap', '6vh')
-  }
-  img.onerror = () => {
-    document.documentElement.classList.add('no-newbg')
-  }
-  // 带时间戳避免被缓存影响检测
-  img.src = '/assets/newBG.png?ts=' + Date.now()
 })
 
 onUnmounted(() => {
   window.removeEventListener('mousemove', handleMouseMove)
   window.removeEventListener('keydown', handleKeyDown)
   if (rafId) cancelAnimationFrame(rafId)
-  if (parallaxRAF) cancelAnimationFrame(parallaxRAF)
 })
 </script>
 
