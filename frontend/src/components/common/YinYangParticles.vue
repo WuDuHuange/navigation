@@ -10,157 +10,171 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 
-/* ============================
-   粒子阴阳玉 — 动态背景
-   ============================= */
+/* ====================================================
+   阴阳玉 — 实心图形 + 边缘浮游粒子（混合方案）
+   ==================================================== */
 
 const canvasRef = ref(null)
 const canvasW = ref(window.innerWidth)
 const canvasH = ref(window.innerHeight)
 
 // ---- 配置 ----
-const PARTICLE_COUNT = 1200      // 粒子总数（密集以勾勒形状）
-const getRadius = () => Math.min(window.innerWidth, window.innerHeight) * 0.38  // 自适应大半径
-const BREATHE_AMP = 8            // 呼吸起伏幅度
-const BREATHE_SPEED = 0.0012     // 呼吸频率
-const ROTATE_SPEED = 0.002       // 自转速度 (弧度/帧)
-const SCATTER_RADIUS = 320       // 鼠标排斥半径
-const SCATTER_FORCE = 6          // 排斥力度
-const RETURN_FACTOR = 0.045      // 回归吸引力
-const FRICTION = 0.90            // 速度衰减
+const EDGE_PARTICLES = 160        // 边缘浮游粒子数
+const getRadius = () => Math.min(window.innerWidth, window.innerHeight) * 0.32
+const SHAPE_ALPHA = 0.10          // 实心图形透明度（水印感）
+const ROTATE_SPEED = 0.002        // 自转速度
+const BREATHE_AMP = 6
+const BREATHE_SPEED = 0.0012
+const SCATTER_RADIUS = 200        // 鼠标排斥半径
+const SCATTER_FORCE = 5
+const RETURN_FACTOR = 0.03
+const FRICTION = 0.91
 
 // ---- 颜色 ----
-const COLOR_RED = '#D9333F'
-const COLOR_YANG = '#C8B8AB'          // 暖灰色替代纯白，白底上可见
-const COLOR_RED_GLOW = 'rgba(217,51,63,0.6)'
-const COLOR_YANG_GLOW = 'rgba(180,160,140,0.4)'
+const COLOR_YIN = '#D9333F'
+const COLOR_YANG = '#B8A99A'
 
 // ---- 状态 ----
 let ctx = null
 let animId = null
 let mouseX = -9999
 let mouseY = -9999
-let globalAngle = 0              // 全局旋转角
+let globalAngle = 0
 let time = 0
 let scrollSpeed = 0
 let lastScrollY = 0
-let particles = []
+let edgeParticles = []
 
-// 阴阳玉中心 — 屏幕右侧，半露装饰
-const getCenterX = () => window.innerWidth * 0.88
-const getCenterY = () => window.innerHeight * 0.50
+// 中心定在屏幕右侧 ~75%，稍偏上
+const getCenterX = () => window.innerWidth * 0.76
+const getCenterY = () => window.innerHeight * 0.46
 
-// ---- 阴阳玉坐标生成 ----
-// 判断点 (x,y)（相对中心，未旋转）属于黑半还是白半
-function isYinSide(lx, ly, R) {
-  const r = R / 2
-  // 上半圆小圆中心
-  const distTop = Math.sqrt(lx * lx + (ly + r) * (ly + r))
-  // 下半圆小圆中心
-  const distBot = Math.sqrt(lx * lx + (ly - r) * (ly - r))
-  // 标准阴阳鱼判断
-  if (distTop <= r) return true    // 在上半小圆内 → 阴
-  if (distBot <= r) return false   // 在下半小圆内 → 阳
-  return lx < 0                    // 左半 → 阴
+// ======== 绘制实心阴阳图形 ========
+function drawYinYang(cx, cy, R, angle) {
+  const r = R / 2         // 半径的一半（S 曲线用）
+  const eyeR = R * 0.10   // 鱼眼半径
+
+  ctx.save()
+  ctx.translate(cx, cy)
+  ctx.rotate(angle)
+  ctx.globalAlpha = SHAPE_ALPHA
+
+  // --- 整个圆：先画阳面（暖灰色）底 ---
+  ctx.beginPath()
+  ctx.arc(0, 0, R, 0, Math.PI * 2)
+  ctx.fillStyle = COLOR_YANG
+  ctx.fill()
+
+  // --- 阴面（红色）：左半圆 + S 曲线（两个半圆弧）---
+  ctx.beginPath()
+  // 左半大圆弧（从下到上，逆时针 = 左半边）
+  ctx.arc(0, 0, R, Math.PI / 2, -Math.PI / 2, false)
+  // 上半小圆弧（中心在 (0,-r)），向左凸出
+  ctx.arc(0, -r, r, -Math.PI / 2, Math.PI / 2, false)
+  // 下半小圆弧（中心在 (0,+r)），向右凸出
+  ctx.arc(0, r, r, -Math.PI / 2, Math.PI / 2, true)
+  ctx.closePath()
+  ctx.fillStyle = COLOR_YIN
+  ctx.fill()
+
+  // --- 鱼眼 ---
+  // 上鱼眼（阴区内，画阳色圆）
+  ctx.beginPath()
+  ctx.arc(0, -r, eyeR, 0, Math.PI * 2)
+  ctx.fillStyle = COLOR_YANG
+  ctx.fill()
+
+  // 下鱼眼（阳区内，画阴色圆）
+  ctx.beginPath()
+  ctx.arc(0, r, eyeR, 0, Math.PI * 2)
+  ctx.fillStyle = COLOR_YIN
+  ctx.fill()
+
+  // --- 描一个极淡的外圈轮廓让边界更清晰 ---
+  ctx.globalAlpha = SHAPE_ALPHA * 0.6
+  ctx.beginPath()
+  ctx.arc(0, 0, R, 0, Math.PI * 2)
+  ctx.strokeStyle = COLOR_YIN
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+
+  ctx.restore()
 }
 
-function generateTargets() {
+// ======== 边缘浮游粒子 ========
+function generateEdgeParticles() {
   const R = getRadius()
   const cx = getCenterX()
   const cy = getCenterY()
-  const targets = []
+  const pts = []
 
-  // 均匀撒点 — 使用 Poisson-like 抖动避免规则环状纹路
-  let attempts = 0
-  while (targets.length < PARTICLE_COUNT && attempts < PARTICLE_COUNT * 30) {
-    attempts++
-    // 使用 r² 均匀分布而非 sqrt(rand)，额外加抖动
-    const angle = Math.random() * Math.PI * 2
-    const u = Math.random()
-    const dist = Math.sqrt(u) * R
-    // 加入微小随机偏移打破同心环
-    const jitter = (Math.random() - 0.5) * 3
-    const lx = Math.cos(angle) * dist + jitter
-    const ly = Math.sin(angle) * dist + jitter
+  for (let i = 0; i < EDGE_PARTICLES; i++) {
+    // 沿大圆边缘 + 少量向外偏移
+    const theta = (i / EDGE_PARTICLES) * Math.PI * 2 + Math.random() * 0.3
+    const rDist = R + (Math.random() - 0.3) * R * 0.35 // 大部分在外圈附近
+    const lx = Math.cos(theta) * rDist
+    const ly = Math.sin(theta) * rDist
+    const isRed = Math.random() < 0.6
 
-    // 确保还在大圆内
-    if (lx * lx + ly * ly > R * R) continue
-
-    const yin = isYinSide(lx, ly, R)
-
-    // 阴阳鱼眼
-    const r = R / 2
-    const eyeR = R * 0.13
-    const distTopEye = Math.sqrt(lx * lx + (ly + r) * (ly + r))
-    const distBotEye = Math.sqrt(lx * lx + (ly - r) * (ly - r))
-    let color, glow
-    if (distTopEye < eyeR) {
-      color = COLOR_YANG
-      glow = COLOR_YANG_GLOW
-    } else if (distBotEye < eyeR) {
-      color = COLOR_RED
-      glow = COLOR_RED_GLOW
-    } else if (yin) {
-      color = COLOR_RED
-      glow = COLOR_RED_GLOW
-    } else {
-      color = COLOR_YANG
-      glow = COLOR_YANG_GLOW
-    }
-
-    // 统一粒子大小：2.5 ± 0.3，保持均匀密实
-    const sz = 2.5 + (Math.random() - 0.5) * 0.6
-
-    targets.push({
+    pts.push({
       lx, ly,
       x: cx + lx,
       y: cy + ly,
-      vx: 0,
-      vy: 0,
-      color,
-      glow,
-      size: sz,
-      baseSize: sz,
-      phase: Math.random() * Math.PI * 2
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.5,
+      color: isRed ? COLOR_YIN : COLOR_YANG,
+      size: Math.random() * 2 + 1.5,
+      baseSize: 0,
+      phase: Math.random() * Math.PI * 2,
+      // 轨道漂移速度
+      drift: (Math.random() - 0.5) * 0.003
     })
   }
-  return targets
+  pts.forEach(p => { p.baseSize = p.size })
+  return pts
 }
 
-// ---- 主循环 ----
+// ======== 主循环 ========
 function animate() {
   if (!ctx) return
   const W = canvasW.value
   const H = canvasH.value
-
-  // 每帧完全清除（消除旋转残影环纹）
   ctx.clearRect(0, 0, W, H)
 
   time++
   globalAngle += ROTATE_SPEED + scrollSpeed * 0.0001
-  scrollSpeed *= 0.95 // 衰减
+  scrollSpeed *= 0.95
 
   const cx = getCenterX()
   const cy = getCenterY()
+  const R = getRadius()
   const breathe = Math.sin(time * BREATHE_SPEED) * BREATHE_AMP
+  const currentR = R + breathe
   const cosA = Math.cos(globalAngle)
   const sinA = Math.sin(globalAngle)
 
-  for (let i = 0; i < particles.length; i++) {
-    const p = particles[i]
+  // 1) 绘制实心阴阳图形
+  drawYinYang(cx, cy, currentR, globalAngle)
 
-    // 目标位置 = 旋转后的局部坐标 + 中心 + 呼吸
-    const scale = 1 + breathe / getRadius()
+  // 2) 绘制边缘浮游粒子
+  for (let i = 0; i < edgeParticles.length; i++) {
+    const p = edgeParticles[i]
+
+    // 目标 = 旋转后的局部坐标 + 呼吸缩放
+    const scale = currentR / getRadius()
     const rlx = p.lx * scale
     const rly = p.ly * scale
+    // 加轨道漂移让粒子缓缓绕转
+    p.lx = p.lx * Math.cos(p.drift) - p.ly * Math.sin(p.drift)
+    p.ly = p.lx * Math.sin(p.drift) + p.ly * Math.cos(p.drift)
+
     const tx = cx + rlx * cosA - rly * sinA
     const ty = cy + rlx * sinA + rly * cosA
 
-    // 吸引力 → 回到目标
     p.vx += (tx - p.x) * RETURN_FACTOR
     p.vy += (ty - p.y) * RETURN_FACTOR
 
-    // 鼠标排斥力
+    // 鼠标排斥
     const dx = p.x - mouseX
     const dy = p.y - mouseY
     const dist = Math.sqrt(dx * dx + dy * dy)
@@ -170,41 +184,26 @@ function animate() {
       p.vy += (dy / dist) * force
     }
 
-    // 摩擦
     p.vx *= FRICTION
     p.vy *= FRICTION
-
-    // 更新位置
     p.x += p.vx
     p.y += p.vy
 
-    // 微弱呼吸尺寸变化
-    const sizeBreath = 1 + Math.sin(time * 0.003 + p.phase) * 0.08
-    p.size = p.baseSize * sizeBreath
+    const sizeB = 1 + Math.sin(time * 0.003 + p.phase) * 0.15
+    p.size = p.baseSize * sizeB
 
-    // 根据速度微调透明度（静止时更实，散开时稍亮）
     const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy)
-    const alpha = Math.min(1, 0.75 + speed * 0.05)
+    const alpha = Math.min(0.7, 0.3 + speed * 0.08)
 
-    // 绘制 — 不用 shadowBlur（性能好，避免模糊）
     ctx.globalAlpha = alpha
     ctx.fillStyle = p.color
+    ctx.shadowColor = p.color
+    ctx.shadowBlur = 4
     ctx.beginPath()
     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
     ctx.fill()
   }
-
-  // 中心微弱辉光
-  const R = getRadius()
-  const glowGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.15)
-  glowGrad.addColorStop(0, 'rgba(217,51,63,0.035)')
-  glowGrad.addColorStop(0.5, 'rgba(217,51,63,0.012)')
-  glowGrad.addColorStop(1, 'rgba(217,51,63,0)')
-  ctx.globalAlpha = 1
-  ctx.fillStyle = glowGrad
-  ctx.beginPath()
-  ctx.arc(cx, cy, R * 1.15, 0, Math.PI * 2)
-  ctx.fill()
+  ctx.shadowBlur = 0
 
   animId = requestAnimationFrame(animate)
 }
@@ -226,21 +225,7 @@ function onScroll() {
 function onResize() {
   canvasW.value = window.innerWidth
   canvasH.value = window.innerHeight
-  // 重新生成目标（半径随窗口变化）
-  const newTargets = generateTargets()
-  // 用新目标替换；多退少补
-  for (let i = 0; i < Math.min(particles.length, newTargets.length); i++) {
-    particles[i].lx = newTargets[i].lx
-    particles[i].ly = newTargets[i].ly
-    particles[i].color = newTargets[i].color
-    particles[i].glow = newTargets[i].glow
-    particles[i].baseSize = newTargets[i].baseSize
-  }
-  if (newTargets.length > particles.length) {
-    particles.push(...newTargets.slice(particles.length))
-  } else if (newTargets.length < particles.length) {
-    particles.length = newTargets.length
-  }
+  edgeParticles = generateEdgeParticles()
 }
 
 // ---- 生命周期 ----
@@ -249,11 +234,11 @@ onMounted(() => {
   if (!canvas) return
   ctx = canvas.getContext('2d')
 
-  particles = generateTargets()
-  // 初始散布 → 让粒子从散开状态聚合（入场动画）
-  for (const p of particles) {
-    p.x = getCenterX() + (Math.random() - 0.5) * window.innerWidth * 0.6
-    p.y = getCenterY() + (Math.random() - 0.5) * window.innerHeight * 0.6
+  edgeParticles = generateEdgeParticles()
+  // 入场：粒子从散开位置聚合
+  for (const p of edgeParticles) {
+    p.x = getCenterX() + (Math.random() - 0.5) * window.innerWidth * 0.5
+    p.y = getCenterY() + (Math.random() - 0.5) * window.innerHeight * 0.5
   }
 
   window.addEventListener('mousemove', onMouseMove)
