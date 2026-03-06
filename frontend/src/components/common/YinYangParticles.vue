@@ -19,16 +19,15 @@ const canvasW = ref(window.innerWidth)
 const canvasH = ref(window.innerHeight)
 
 // ---- 配置 ----
-const PARTICLE_COUNT = 520       // 粒子总数
-const YIN_YANG_RADIUS = 180      // 阴阳玉半径 (px)
-const BREATHE_AMP = 12           // 呼吸起伏幅度
-const BREATHE_SPEED = 0.0015     // 呼吸频率
-const ROTATE_SPEED = 0.003       // 自转速度 (弧度/帧)
-const SCATTER_RADIUS = 260       // 鼠标排斥半径
-const SCATTER_FORCE = 8          // 排斥力度
-const RETURN_FACTOR = 0.04       // 回归吸引力
-const FRICTION = 0.92            // 速度衰减
-const TRAIL_ALPHA = 0.12         // 拖影浓度 (越小拖尾越长)
+const PARTICLE_COUNT = 1200      // 粒子总数（密集以勾勒形状）
+const getRadius = () => Math.min(window.innerWidth, window.innerHeight) * 0.38  // 自适应大半径
+const BREATHE_AMP = 8            // 呼吸起伏幅度
+const BREATHE_SPEED = 0.0012     // 呼吸频率
+const ROTATE_SPEED = 0.002       // 自转速度 (弧度/帧)
+const SCATTER_RADIUS = 320       // 鼠标排斥半径
+const SCATTER_FORCE = 6          // 排斥力度
+const RETURN_FACTOR = 0.045      // 回归吸引力
+const FRICTION = 0.90            // 速度衰减
 
 // ---- 颜色 ----
 const COLOR_RED = '#D9333F'
@@ -48,8 +47,8 @@ let lastScrollY = 0
 let particles = []
 
 // 阴阳玉中心 — 屏幕右侧偏中
-const getCenterX = () => window.innerWidth * 0.78
-const getCenterY = () => window.innerHeight * 0.48
+const getCenterX = () => window.innerWidth * 0.72
+const getCenterY = () => window.innerHeight * 0.50
 
 // ---- 阴阳玉坐标生成 ----
 // 判断点 (x,y)（相对中心，未旋转）属于黑半还是白半
@@ -66,33 +65,39 @@ function isYinSide(lx, ly, R) {
 }
 
 function generateTargets() {
-  const R = YIN_YANG_RADIUS
+  const R = getRadius()
   const cx = getCenterX()
   const cy = getCenterY()
   const targets = []
 
-  // 在大圆内均匀撒点
+  // 均匀撒点 — 使用 Poisson-like 抖动避免规则环状纹路
   let attempts = 0
-  while (targets.length < PARTICLE_COUNT && attempts < PARTICLE_COUNT * 20) {
+  while (targets.length < PARTICLE_COUNT && attempts < PARTICLE_COUNT * 30) {
     attempts++
+    // 使用 r² 均匀分布而非 sqrt(rand)，额外加抖动
     const angle = Math.random() * Math.PI * 2
-    const dist = Math.sqrt(Math.random()) * R
-    const lx = Math.cos(angle) * dist
-    const ly = Math.sin(angle) * dist
+    const u = Math.random()
+    const dist = Math.sqrt(u) * R
+    // 加入微小随机偏移打破同心环
+    const jitter = (Math.random() - 0.5) * 3
+    const lx = Math.cos(angle) * dist + jitter
+    const ly = Math.sin(angle) * dist + jitter
+
+    // 确保还在大圆内
+    if (lx * lx + ly * ly > R * R) continue
+
     const yin = isYinSide(lx, ly, R)
 
-    // 阴阳鱼眼：在小圆中心附近放反色粒子
+    // 阴阳鱼眼
     const r = R / 2
-    const eyeR = R * 0.12
+    const eyeR = R * 0.13
     const distTopEye = Math.sqrt(lx * lx + (ly + r) * (ly + r))
     const distBotEye = Math.sqrt(lx * lx + (ly - r) * (ly - r))
     let color, glow
     if (distTopEye < eyeR) {
-      // 上鱼眼 → 阳色
       color = COLOR_WHITE
       glow = COLOR_WHITE_GLOW
     } else if (distBotEye < eyeR) {
-      // 下鱼眼 → 阴色
       color = COLOR_RED
       glow = COLOR_RED_GLOW
     } else if (yin) {
@@ -103,26 +108,22 @@ function generateTargets() {
       glow = COLOR_WHITE_GLOW
     }
 
+    // 统一粒子大小：2.5 ± 0.3，保持均匀密实
+    const sz = 2.5 + (Math.random() - 0.5) * 0.6
+
     targets.push({
-      // 目标位置 (局部坐标，后续旋转)
       lx, ly,
-      // 世界坐标
       x: cx + lx,
       y: cy + ly,
-      // 速度
       vx: 0,
       vy: 0,
-      // 外观
       color,
       glow,
-      size: Math.random() * 2.2 + 1.2,
-      baseSize: 0,
-      // 随机相位，用于呼吸感
+      size: sz,
+      baseSize: sz,
       phase: Math.random() * Math.PI * 2
     })
   }
-  // 给 baseSize 赋值
-  targets.forEach(p => { p.baseSize = p.size })
   return targets
 }
 
@@ -132,9 +133,8 @@ function animate() {
   const W = canvasW.value
   const H = canvasH.value
 
-  // 半透明覆盖实现拖影
-  ctx.fillStyle = `rgba(253,254,254,${TRAIL_ALPHA})`
-  ctx.fillRect(0, 0, W, H)
+  // 每帧完全清除（消除旋转残影环纹）
+  ctx.clearRect(0, 0, W, H)
 
   time++
   globalAngle += ROTATE_SPEED + scrollSpeed * 0.0001
@@ -150,7 +150,7 @@ function animate() {
     const p = particles[i]
 
     // 目标位置 = 旋转后的局部坐标 + 中心 + 呼吸
-    const scale = 1 + breathe / YIN_YANG_RADIUS
+    const scale = 1 + breathe / getRadius()
     const rlx = p.lx * scale
     const rly = p.ly * scale
     const tx = cx + rlx * cosA - rly * sinA
@@ -178,37 +178,33 @@ function animate() {
     p.x += p.vx
     p.y += p.vy
 
-    // 呼吸的粒子大小变化
-    const sizeBreath = 1 + Math.sin(time * 0.004 + p.phase) * 0.25
+    // 微弱呼吸尺寸变化
+    const sizeBreath = 1 + Math.sin(time * 0.003 + p.phase) * 0.08
     p.size = p.baseSize * sizeBreath
 
-    // 根据速度算出亮度/Alpha
+    // 根据速度微调透明度（静止时更实，散开时稍亮）
     const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy)
-    const alpha = Math.min(1, 0.5 + speed * 0.1)
+    const alpha = Math.min(1, 0.75 + speed * 0.05)
 
-    // 绘制
-    ctx.save()
+    // 绘制 — 不用 shadowBlur（性能好，避免模糊）
     ctx.globalAlpha = alpha
-    ctx.shadowColor = p.glow
-    ctx.shadowBlur = p.size * 3
     ctx.fillStyle = p.color
     ctx.beginPath()
     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
     ctx.fill()
-    ctx.restore()
   }
 
-  // 中心画一个微弱的辉光
-  ctx.save()
-  const glowGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, YIN_YANG_RADIUS * 1.2)
-  glowGrad.addColorStop(0, 'rgba(217,51,63,0.04)')
-  glowGrad.addColorStop(0.5, 'rgba(217,51,63,0.015)')
+  // 中心微弱辉光
+  const R = getRadius()
+  const glowGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.15)
+  glowGrad.addColorStop(0, 'rgba(217,51,63,0.035)')
+  glowGrad.addColorStop(0.5, 'rgba(217,51,63,0.012)')
   glowGrad.addColorStop(1, 'rgba(217,51,63,0)')
+  ctx.globalAlpha = 1
   ctx.fillStyle = glowGrad
   ctx.beginPath()
-  ctx.arc(cx, cy, YIN_YANG_RADIUS * 1.2, 0, Math.PI * 2)
+  ctx.arc(cx, cy, R * 1.15, 0, Math.PI * 2)
   ctx.fill()
-  ctx.restore()
 
   animId = requestAnimationFrame(animate)
 }
@@ -230,16 +226,20 @@ function onScroll() {
 function onResize() {
   canvasW.value = window.innerWidth
   canvasH.value = window.innerHeight
-  // 重新生成目标
+  // 重新生成目标（半径随窗口变化）
   const newTargets = generateTargets()
-  // 保留已有粒子的世界坐标，只更新目标
-  for (let i = 0; i < particles.length; i++) {
-    if (newTargets[i]) {
-      particles[i].lx = newTargets[i].lx
-      particles[i].ly = newTargets[i].ly
-      particles[i].color = newTargets[i].color
-      particles[i].glow = newTargets[i].glow
-    }
+  // 用新目标替换；多退少补
+  for (let i = 0; i < Math.min(particles.length, newTargets.length); i++) {
+    particles[i].lx = newTargets[i].lx
+    particles[i].ly = newTargets[i].ly
+    particles[i].color = newTargets[i].color
+    particles[i].glow = newTargets[i].glow
+    particles[i].baseSize = newTargets[i].baseSize
+  }
+  if (newTargets.length > particles.length) {
+    particles.push(...newTargets.slice(particles.length))
+  } else if (newTargets.length < particles.length) {
+    particles.length = newTargets.length
   }
 }
 
