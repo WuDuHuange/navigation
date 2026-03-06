@@ -31,9 +31,9 @@ const FRICTION = 0.90            // 速度衰减
 
 // ---- 颜色 ----
 const COLOR_RED = '#D9333F'
-const COLOR_WHITE = '#FFFFFF'
+const COLOR_YANG = '#C8B8AB'          // 暖灰色替代纯白，白底上可见
 const COLOR_RED_GLOW = 'rgba(217,51,63,0.6)'
-const COLOR_WHITE_GLOW = 'rgba(255,255,255,0.5)'
+const COLOR_YANG_GLOW = 'rgba(180,160,140,0.4)'
 
 // ---- 状态 ----
 let ctx = null
@@ -46,8 +46,8 @@ let scrollSpeed = 0
 let lastScrollY = 0
 let particles = []
 
-// 阴阳玉中心 — 屏幕右侧偏中
-const getCenterX = () => window.innerWidth * 0.72
+// 阴阳玉中心 — 屏幕右侧，半露装饰
+const getCenterX = () => window.innerWidth * 0.88
 const getCenterY = () => window.innerHeight * 0.50
 
 // ---- 阴阳玉坐标生成 ----
@@ -95,8 +95,8 @@ function generateTargets() {
     const distBotEye = Math.sqrt(lx * lx + (ly - r) * (ly - r))
     let color, glow
     if (distTopEye < eyeR) {
-      color = COLOR_WHITE
-      glow = COLOR_WHITE_GLOW
+      color = COLOR_YANG
+      glow = COLOR_YANG_GLOW
     } else if (distBotEye < eyeR) {
       color = COLOR_RED
       glow = COLOR_RED_GLOW
@@ -104,8 +104,8 @@ function generateTargets() {
       color = COLOR_RED
       glow = COLOR_RED_GLOW
     } else {
-      color = COLOR_WHITE
-      glow = COLOR_WHITE_GLOW
+      color = COLOR_YANG
+      glow = COLOR_YANG_GLOW
     }
 
     // 统一粒子大小：2.5 ± 0.3，保持均匀密实
