@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen main-bg">
+  <div class="min-h-screen main-bg flex flex-col">
     <NavHeader />
-    <main class="container mx-auto px-4 py-8 relative z-10">
+    <main class="container mx-auto px-4 py-8 relative z-10 flex-1 w-full">
       <router-view v-slot="{ Component }">
         <transition name="page" mode="out-in">
           <component :is="Component" />

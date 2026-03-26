@@ -20,7 +20,7 @@
     </section>
 
     <!-- 导航卡片 -->
-    <section>
+    <section class="min-h-[clamp(22rem,50vh,40rem)]">
       <div class="flex items-center justify-between mb-8">
         <h2 class="text-2xl font-bold text-ink-800 flex items-center gap-3">
           <span class="seal-icon">入</span>
@@ -30,7 +30,7 @@
           {{ linksStore.links.length }} 个项目
         </span>
       </div>
-      <LinkGrid :links="linksStore.links" />
+      <LinkGrid :links="linksStore.links" :loading="linksStore.loading" />
     </section>
 
     <!-- 最新文章预览 -->

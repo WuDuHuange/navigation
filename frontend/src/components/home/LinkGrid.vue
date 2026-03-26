@@ -17,8 +17,26 @@
       </button>
     </div>
 
+    <!-- 加载占位：根据屏幕高度自适应，避免 footer 上浮 -->
+    <div
+      v-if="loading"
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 min-h-[clamp(20rem,46vh,34rem)]"
+    >
+      <div
+        v-for="idx in 8"
+        :key="`skeleton-${idx}`"
+        class="card p-6 animate-pulse"
+      >
+        <div class="h-6 w-10 rounded-sm bg-paper-300 mb-5"></div>
+        <div class="h-5 w-2/3 rounded-sm bg-paper-300 mb-3"></div>
+        <div class="h-4 w-full rounded-sm bg-paper-200 mb-2"></div>
+        <div class="h-4 w-5/6 rounded-sm bg-paper-200 mb-5"></div>
+        <div class="h-4 w-20 rounded-sm bg-paper-300"></div>
+      </div>
+    </div>
+
     <!-- 卡片网格 -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+    <div v-else-if="filteredLinks.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
       <LinkCard 
         v-for="link in filteredLinks" 
         :key="link.id" 
@@ -27,7 +45,7 @@
     </div>
 
     <!-- 空状态 -->
-    <div v-if="filteredLinks.length === 0" class="text-center py-16">
+    <div v-else class="text-center min-h-[clamp(18rem,38vh,28rem)] flex flex-col items-center justify-center">
       <div class="seal-icon-lg mx-auto mb-4">空</div>
       <p class="text-ink-400">暂无导航链接</p>
     </div>
@@ -42,6 +60,10 @@ const props = defineProps({
   links: {
     type: Array,
     default: () => []
+  },
+  loading: {
+    type: Boolean,
+    default: false
   }
 })
 
