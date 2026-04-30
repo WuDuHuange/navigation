@@ -2,13 +2,27 @@ const express = require('express')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const db = require('../db')
+const { getJwtSecret } = require('../config/security')
+const { createRateLimiter } = require('../middleware/rateLimit')
 
 const router = express.Router()
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
+const loginRateLimit = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: '登录尝试过于频繁，请 15 分钟后再试',
+  keyPrefix: 'login'
+})
 
 // POST /auth/login
-router.post('/login', async (req, res, next) => {
+router.post('/login', loginRateLimit, async (req, res, next) => {
   try {
+    let jwtSecret
+    try {
+      jwtSecret = getJwtSecret()
+    } catch (err) {
+      return res.status(500).json({ error: '服务配置错误，请联系管理员' })
+    }
+
     const { username, password } = req.body
     if (!username || !password) {
       return res.status(400).json({ error: '用户名和密码为必填项' })
@@ -25,7 +39,7 @@ router.post('/login', async (req, res, next) => {
       return res.status(401).json({ error: '用户名或密码错误' })
     }
     
-    const token = jwt.sign({ id: admin.id, username: admin.username }, JWT_SECRET, { expiresIn: '7d' })
+    const token = jwt.sign({ id: admin.id, username: admin.username }, jwtSecret, { expiresIn: '7d' })
     
     await db.query('UPDATE admins SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [admin.id])
     

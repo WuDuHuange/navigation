@@ -107,9 +107,9 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { marked } from 'marked'
 import AISummary from '../components/blog/AISummary.vue'
+import { apiRequest } from '../utils/apiClient'
 
 const route = useRoute()
-const API_URL = import.meta.env.VITE_API_URL || ''
 
 const article = ref(null)
 const comments = ref([])
@@ -137,23 +137,16 @@ const submitComment = async () => {
   
   isSubmitting.value = true
   try {
-    const res = await fetch(`${API_URL}/api/v1/articles/${article.value.id}/comments`, {
+    const data = await apiRequest(`/api/v1/articles/${article.value.id}/comments`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(commentForm.value)
+      body: commentForm.value
     })
-    
-    const data = await res.json()
-    
-    if (res.ok) {
-      alert(data.message || '评论已提交，等待审核')
-      commentForm.value = { nickname: '', email: '', content: '' }
-    } else {
-      alert(data.error || '提交失败')
-    }
+
+    alert(data.message || '评论已提交，等待审核')
+    commentForm.value = { nickname: '', email: '', content: '' }
   } catch (err) {
     console.error('提交评论失败:', err)
-    alert('提交失败，请重试')
+    alert(err.message || '提交失败，请重试')
   } finally {
     isSubmitting.value = false
   }
@@ -163,18 +156,17 @@ const fetchArticle = async () => {
   const slug = route.params.slug
   
   try {
-    const res = await fetch(`${API_URL}/api/v1/articles/${slug}`)
-    const data = await res.json()
-    
-    if (res.ok && data.success) {
-      article.value = data.data
-      fetchComments()
-    } else {
-      article.value = {
-        id: 1,
-        slug,
-        title: '欢迎来到导航页',
-        content: `# 欢迎！
+    const data = await apiRequest(`/api/v1/articles/${slug}`)
+    article.value = data.data
+    fetchComments()
+  } catch (err) {
+    console.error('获取文章失败:', err)
+    // 提供兜底内容，避免详情页空白
+    article.value = {
+      id: 1,
+      slug,
+      title: '欢迎来到导航页',
+      content: `# 欢迎！
 
 这是一个示例文章，展示 Markdown 渲染效果。
 
@@ -193,15 +185,12 @@ console.log('Hello, World!')
 
 感谢访问！
 `,
-        summary: '导航页项目介绍与使用说明',
-        ai_summary: '这是一篇关于导航页项目的介绍文章，展示了 Markdown 渲染功能和 AI 智能总结等特色功能。',
-        tags: ['公告', '教程'],
-        view_count: 42,
-        created_at: '2025-12-07T00:00:00Z'
-      }
+      summary: '导航页项目介绍与使用说明',
+      ai_summary: '这是一篇关于导航页项目的介绍文章，展示了 Markdown 渲染功能和 AI 智能总结等特色功能。',
+      tags: ['公告', '教程'],
+      view_count: 42,
+      created_at: '2025-12-07T00:00:00Z'
     }
-  } catch (err) {
-    console.error('获取文章失败:', err)
   }
 }
 
@@ -209,12 +198,8 @@ const fetchComments = async () => {
   if (!article.value?.id) return
   
   try {
-    const res = await fetch(`${API_URL}/api/v1/articles/${article.value.id}/comments`)
-    const data = await res.json()
-    
-    if (res.ok && data.success) {
-      comments.value = data.data
-    }
+    const data = await apiRequest(`/api/v1/articles/${article.value.id}/comments`)
+    comments.value = data.data
   } catch (err) {
     console.error('获取评论失败:', err)
   }

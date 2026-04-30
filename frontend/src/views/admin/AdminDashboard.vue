@@ -431,13 +431,12 @@ import { useAuthStore } from '../../stores/auth'
 import { useLinksStore } from '../../stores/links'
 import { useArticlesStore } from '../../stores/articles'
 import ImageUpload from '../../components/common/ImageUpload.vue'
+import { apiRequest } from '../../utils/apiClient'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const linksStore = useLinksStore()
 const articlesStore = useArticlesStore()
-
-const API_URL = import.meta.env.VITE_API_URL || ''
 
 const tabs = [
   { id: 'links', name: '导航链接', icon: '链' },
@@ -485,43 +484,35 @@ const handleLogout = () => {
 const fetchData = async () => {
   try {
     // 获取链接
-    const linksRes = await fetch(`${API_URL}/api/v1/links`)
-    const linksData = await linksRes.json()
+    const linksData = await apiRequest('/api/v1/links')
     if (linksData.success) {
       links.value = linksData.data
       stats.value.links = linksData.data.length
     }
 
     // 获取文章（管理员接口，包含草稿）
-    const articlesRes = await fetch(`${API_URL}/api/v1/articles/admin/all?limit=50`, {
+    const articlesData = await apiRequest('/api/v1/articles/admin/all?limit=50', {
       headers: authStore.getAuthHeaders()
     })
-    const articlesData = await articlesRes.json()
     if (articlesData.success) {
       articles.value = articlesData.data
       stats.value.articles = articlesData.pagination?.total || articlesData.data.length
     }
 
     // 获取设置
-    const settingsRes = await fetch(`${API_URL}/api/v1/settings`, {
+    const settingsData = await apiRequest('/api/v1/settings', {
       headers: authStore.getAuthHeaders()
     })
-    if (settingsRes.ok) {
-      const settingsData = await settingsRes.json()
-      if (settingsData.success) {
-        settings.value = settingsData.data
-      }
+    if (settingsData.success) {
+      settings.value = settingsData.data
     }
 
     // 获取待审核评论
-    const commentsRes = await fetch(`${API_URL}/api/v1/comments/pending`, {
+    const commentsData = await apiRequest('/api/v1/comments/pending', {
       headers: authStore.getAuthHeaders()
     })
-    if (commentsRes.ok) {
-      const commentsData = await commentsRes.json()
-      if (commentsData.success) {
-        pendingComments.value = commentsData.data
-      }
+    if (commentsData.success) {
+      pendingComments.value = commentsData.data
     }
   } catch (err) {
     console.error('获取数据失败:', err)
@@ -626,17 +617,13 @@ const regenerateSummary = async (article) => {
   if (!confirm(`确定要为文章 "${article.title}" 重新生成 AI 总结吗？`)) return
   
   try {
-    const res = await fetch(`${API_URL}/api/v1/articles/${article.id}/regenerate-summary`, {
+    await apiRequest(`/api/v1/articles/${article.id}/regenerate-summary`, {
       method: 'POST',
       headers: authStore.getAuthHeaders()
     })
-    const data = await res.json()
-    if (res.ok) {
-      alert('AI 总结已重新生成')
-      await fetchData()
-    } else {
-      alert(data.error || '生成失败')
-    }
+
+    alert('AI 总结已重新生成')
+    await fetchData()
   } catch (err) {
     alert('生成失败: ' + err.message)
   }
@@ -647,25 +634,19 @@ const saveSettings = async () => {
   savingSettings.value = true
   settingsSaveResult.value = null
   try {
-    const res = await fetch(`${API_URL}/api/v1/settings`, {
+    const data = await apiRequest('/api/v1/settings', {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
         ...authStore.getAuthHeaders()
       },
-      body: JSON.stringify(settingsForm.value)
+      body: settingsForm.value
     })
-    const data = await res.json()
-    if (res.ok) {
-      settingsSaveResult.value = { success: true, message: '✓ 设置已保存成功！' }
-      settings.value.ai_available = data.data?.ai_available || false
-      settingsForm.value.gemini_api_key = ''
-      await fetchData()
-      // 3秒后清除提示
-      setTimeout(() => { settingsSaveResult.value = null }, 3000)
-    } else {
-      settingsSaveResult.value = { success: false, message: '✗ ' + (data.error || '保存失败') }
-    }
+
+    settingsSaveResult.value = { success: true, message: '✓ 设置已保存成功！' }
+    settings.value.ai_available = data.data?.ai_available || false
+    settingsForm.value.gemini_api_key = ''
+    await fetchData()
+    setTimeout(() => { settingsSaveResult.value = null }, 3000)
   } catch (err) {
     settingsSaveResult.value = { success: false, message: '✗ 保存失败: ' + err.message }
   } finally {
@@ -677,16 +658,12 @@ const testAI = async () => {
   testingAI.value = true
   aiTestResult.value = null
   try {
-    const res = await fetch(`${API_URL}/api/v1/settings/test-ai`, {
+    await apiRequest('/api/v1/settings/test-ai', {
       method: 'POST',
       headers: authStore.getAuthHeaders()
     })
-    const data = await res.json()
-    if (res.ok) {
-      aiTestResult.value = { success: true, message: '✓ AI 服务连接正常！' }
-    } else {
-      aiTestResult.value = { success: false, message: '✗ ' + (data.error || '连接失败') }
-    }
+
+    aiTestResult.value = { success: true, message: '✓ AI 服务连接正常！' }
   } catch (err) {
     aiTestResult.value = { success: false, message: '✗ 测试失败: ' + err.message }
   } finally {
@@ -719,13 +696,12 @@ const onImageUploaded = (data) => {
 // 评论操作
 const approveComment = async (id) => {
   try {
-    await fetch(`${API_URL}/api/v1/comments/${id}/approve`, {
+    await apiRequest(`/api/v1/comments/${id}/approve`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
         ...authStore.getAuthHeaders()
       },
-      body: JSON.stringify({ approved: true })
+      body: { approved: true }
     })
     pendingComments.value = pendingComments.value.filter(c => c.id !== id)
     stats.value.pendingComments--
@@ -737,7 +713,7 @@ const approveComment = async (id) => {
 const deleteComment = async (id) => {
   if (confirm('确定删除这条评论吗？')) {
     try {
-      await fetch(`${API_URL}/api/v1/comments/${id}`, {
+      await apiRequest(`/api/v1/comments/${id}`, {
         method: 'DELETE',
         headers: authStore.getAuthHeaders()
       })

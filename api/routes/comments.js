@@ -1,8 +1,15 @@
 const express = require('express')
 const db = require('../db')
 const authMiddleware = require('../middleware/auth')
+const { createRateLimiter } = require('../middleware/rateLimit')
 
 const router = express.Router()
+const commentRateLimit = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 6,
+  message: '评论提交过于频繁，请稍后再试',
+  keyPrefix: 'comment'
+})
 
 // GET /comments/pending - 获取待审核评论（需要登录）
 router.get('/pending', authMiddleware, async (req, res, next) => {
@@ -37,7 +44,7 @@ router.get('/article/:articleId', async (req, res, next) => {
 })
 
 // POST /comments
-router.post('/', async (req, res, next) => {
+router.post('/', commentRateLimit, async (req, res, next) => {
   try {
     const { article_id, nickname, email, content } = req.body
     if (!article_id || !nickname || !content) {

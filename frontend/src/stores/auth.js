@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { apiRequest } from '../utils/apiClient'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('admin_token') || null)
@@ -8,18 +9,10 @@ export const useAuthStore = defineStore('auth', () => {
   const isLoggedIn = computed(() => !!token.value)
 
   const login = async (username, password) => {
-    const API_URL = import.meta.env.VITE_API_URL || ''
-    const res = await fetch(`${API_URL}/api/v1/auth/login`, {
+    const data = await apiRequest('/api/v1/auth/login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      body: { username, password }
     })
-
-    const data = await res.json()
-    
-    if (!res.ok) {
-      throw new Error(data.error || '登录失败')
-    }
 
     token.value = data.data.token
     admin.value = data.data.admin

@@ -2,8 +2,15 @@ const express = require('express')
 const db = require('../db')
 const authMiddleware = require('../middleware/auth')
 const aiService = require('../services/ai')
+const { createRateLimiter } = require('../middleware/rateLimit')
 
 const router = express.Router()
+const commentRateLimit = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 6,
+  message: '评论提交过于频繁，请稍后再试',
+  keyPrefix: 'article-comment'
+})
 
 // GET /articles - 公开接口，只返回已发布文章
 router.get('/', async (req, res, next) => {
@@ -195,7 +202,7 @@ router.get('/:id/comments', async (req, res, next) => {
 })
 
 // POST /articles/:id/comments - 提交评论
-router.post('/:id/comments', async (req, res, next) => {
+router.post('/:id/comments', commentRateLimit, async (req, res, next) => {
   try {
     const { id } = req.params
     const { nickname, email, content } = req.body
