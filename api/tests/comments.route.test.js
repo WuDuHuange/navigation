@@ -42,3 +42,26 @@ test('POST /comments returns 201 on valid payload', async () => {
   assert.equal(res.body.success, true)
   assert.equal(res.body.data.nickname, '访客')
 })
+
+test('GET /article/:articleId returns approved comments', async () => {
+  const commentsRouter = proxyquire('../routes/comments', {
+    '../db': {
+      query: async () => ({
+        rows: [
+          { id: 1, nickname: 'A', content: '好文章', created_at: new Date().toISOString() }
+        ]
+      })
+    }
+  })
+
+  const app = express()
+  app.use(express.json())
+  app.use('/comments', commentsRouter)
+
+  const res = await request(app).get('/comments/article/12')
+
+  assert.equal(res.status, 200)
+  assert.equal(res.body.success, true)
+  assert.equal(res.body.data.length, 1)
+  assert.equal(res.body.data[0].nickname, 'A')
+})

@@ -1,0 +1,6 @@
+require('./auth.test')
+require('./auth.route.test')
+require('./comments.test')
+require('./comments.route.test')
+require('./articles.test')
+require('./articles.route.test')

@@ -16,6 +16,7 @@ app.use('/api/v1/links', require('./routes/links'))
 app.use('/api/v1/articles', require('./routes/articles'))
 app.use('/api/v1/comments', require('./routes/comments'))
 app.use('/api/v1/auth', require('./routes/auth'))
+app.use('/api/v1/audit-logs', require('./routes/auditLogs'))
 app.use('/api/v1/settings', require('./routes/settings'))
 app.use('/api/v1/upload', require('./routes/upload'))
 

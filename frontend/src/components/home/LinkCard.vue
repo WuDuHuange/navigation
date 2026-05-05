@@ -8,6 +8,7 @@
     @mouseenter="startTilt"
     @mousemove="updateTilt"
     @mouseleave="resetTilt"
+    @click="handleClick"
   >
     <!-- 符卡发光层 -->
     <div class="absolute inset-0 rounded-[3px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
@@ -51,8 +52,9 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useLinksStore } from '../../stores/links'
 
-defineProps({
+const props = defineProps({
   link: {
     type: Object,
     required: true
@@ -93,6 +95,13 @@ const resetTilt = (e) => {
   if (!cardRef.value) return
   cardRef.value.style.transition = 'transform 0.5s ease-out'
   cardRef.value.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)'
+}
+
+const handleClick = () => {
+  const linksStore = useLinksStore()
+  if (props.link?.id) {
+    linksStore.recordClick(props.link.id)
+  }
 }
 
 // 根据分类返回汉字印章图标

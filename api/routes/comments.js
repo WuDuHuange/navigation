@@ -2,6 +2,7 @@ const express = require('express')
 const db = require('../db')
 const authMiddleware = require('../middleware/auth')
 const { createRateLimiter } = require('../middleware/rateLimit')
+const { auditLog } = require('../middleware/auditLog')
 
 const router = express.Router()
 const commentRateLimit = createRateLimiter({
@@ -63,7 +64,7 @@ router.post('/', commentRateLimit, async (req, res, next) => {
 })
 
 // PUT /comments/:id/approve
-router.put('/:id/approve', authMiddleware, async (req, res, next) => {
+router.put('/:id/approve', authMiddleware, auditLog('APPROVE_COMMENT', 'comments', (body, req) => req.params.id), async (req, res, next) => {
   try {
     const { id } = req.params
     const { approved } = req.body
@@ -75,7 +76,7 @@ router.put('/:id/approve', authMiddleware, async (req, res, next) => {
 })
 
 // DELETE /comments/:id
-router.delete('/:id', authMiddleware, async (req, res, next) => {
+router.delete('/:id', authMiddleware, auditLog('DELETE_COMMENT', 'comments', (body, req) => req.params.id), async (req, res, next) => {
   try {
     const { id } = req.params
     await db.query('DELETE FROM comments WHERE id = $1', [id])

@@ -72,3 +72,23 @@
 - 工程化：在 `api/tests` 下添加最小集成测试：`auth.test.js`、`comments.test.js`、`articles.test.js`，并新增运行脚本 `run-min-tests.js`。
 - 验证：在本地已安装依赖并运行 `node tests/run-min-tests.js`，三项最小检查均通过（针对未授权/缺失字段返回正确的 401/400）。
 - 备注：测试覆盖了鉴权边界和基本输入验证，未依赖数据库初始化；下一步将扩展到对数据库的端到端用例并在 CI 中运行。
+
+### 2026-04-30 第三阶段（继续推进）
+
+- 工程化：新增 `api/tests/all.test.js` 作为跨平台测试入口，统一运行边界测试与路由测试。
+- 工程化：补充 `auth.route.test.js`、`comments.route.test.js`、`articles.route.test.js` 的正常路径与详情路径回归。
+- 验证：本地执行 `npm test --prefix api`，12 条测试全部通过。
+- CI：更新 GitHub Actions，改为安装 `api` 与 `frontend` 依赖后执行完整 `api` 测试，并构建前端。
+
+### 2026-05-05 第四阶段（导航核心 & 审计）
+
+- 导航核心：为 `links` 表添加 `click_count` 字段，新增 `POST /api/v1/links/:id/click` 端点记录点击。
+- 导航核心：`LinkCard.vue` 点击时静默上报点击统计。
+- 导航核心：`GET /api/v1/links` 支持 `?sort=hot` 按热门（点击量）排序。
+- 导航核心：新增 `GET /api/v1/links/health` 管理员健康检查端点，并发检测所有活跃链接 HTTP 状态。
+- 管理后台：新增操作审计表 `audit_logs` 与审计中间件 `api/middleware/auditLog.js`。
+- 管理后台：`links`、`articles`、`comments` 的创建/更新/删除操作均写入审计日志。
+- 管理后台：新增 `GET /api/v1/audit-logs` 查询接口（支持分页与操作类型筛选）。
+- 管理后台：`AdminDashboard.vue` 新增"健康检查"与"操作日志"两个 Tab 页。
+- 数据库：提供增量迁移脚本 `api/db/migrate_20260430.sql`。
+- 验证：`npm test --prefix api` 12 条测试全通过，`npm run build --prefix frontend` 构建成功。

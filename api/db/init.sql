@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS links (
   category VARCHAR(100),
   sort_order INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT true,
+  click_count INTEGER DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -56,6 +57,20 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 操作审计表
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id SERIAL PRIMARY KEY,
+  admin_id INTEGER,
+  admin_username VARCHAR(100),
+  action VARCHAR(100) NOT NULL,
+  resource VARCHAR(100),
+  resource_id INTEGER,
+  detail TEXT,
+  ip_address VARCHAR(45),
+  user_agent TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 创建默认管理员账户 (用户名: admin, 密码: admin123)

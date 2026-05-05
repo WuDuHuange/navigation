@@ -3,6 +3,7 @@ const db = require('../db')
 const authMiddleware = require('../middleware/auth')
 const aiService = require('../services/ai')
 const { createRateLimiter } = require('../middleware/rateLimit')
+const { auditLog } = require('../middleware/auditLog')
 
 const router = express.Router()
 const commentRateLimit = createRateLimiter({
@@ -85,7 +86,7 @@ router.get('/:slug', async (req, res, next) => {
 })
 
 // POST /articles
-router.post('/', authMiddleware, async (req, res, next) => {
+router.post('/', authMiddleware, auditLog('CREATE_ARTICLE', 'articles', (body) => body?.data?.id), async (req, res, next) => {
   try {
     const { title, slug, content, summary, tags, published, generate_ai_summary } = req.body
     if (!title || !content) {
@@ -118,7 +119,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
 })
 
 // PUT /articles/:id
-router.put('/:id', authMiddleware, async (req, res, next) => {
+router.put('/:id', authMiddleware, auditLog('UPDATE_ARTICLE', 'articles', (body, req) => req.params.id), async (req, res, next) => {
   try {
     const { id } = req.params
     const { title, slug, content, summary, tags, published, regenerate_ai_summary } = req.body
@@ -174,7 +175,7 @@ router.post('/:id/regenerate-summary', authMiddleware, async (req, res, next) =>
 })
 
 // DELETE /articles/:id
-router.delete('/:id', authMiddleware, async (req, res, next) => {
+router.delete('/:id', authMiddleware, auditLog('DELETE_ARTICLE', 'articles', (body, req) => req.params.id), async (req, res, next) => {
   try {
     const { id } = req.params
     await db.query('DELETE FROM articles WHERE id = $1', [id])

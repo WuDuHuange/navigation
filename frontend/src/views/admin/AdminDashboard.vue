@@ -266,6 +266,106 @@
           </div>
         </div>
       </div>
+
+      <!-- 健康检查 -->
+      <div v-if="activeTab === 'health'">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-lg font-semibold text-ink-900">链接健康检查</h2>
+          <button
+            @click="runHealthCheck"
+            :disabled="healthChecking"
+            class="btn-primary flex items-center gap-2"
+          >
+            <span v-if="healthChecking" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+            {{ healthChecking ? '检查中...' : '开始检查' }}
+          </button>
+        </div>
+
+        <div v-if="healthCheckResults.length === 0 && !healthChecking" class="text-center py-12 text-ink-500">
+          <span class="seal-icon-lg mb-3">检</span>
+          <p>点击上方按钮检查所有链接健康状态</p>
+        </div>
+
+        <div v-else-if="healthCheckResults.length > 0" class="space-y-3">
+          <div
+            v-for="item in healthCheckResults"
+            :key="item.id"
+            class="flex items-center justify-between p-4 rounded-sm border"
+            :class="item.ok ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'"
+          >
+            <div class="flex-1">
+              <h4 class="font-medium text-ink-900">{{ item.title }}</h4>
+              <p class="text-xs text-ink-500 mt-1">{{ item.url }}</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <span
+                class="px-3 py-1 rounded-sm text-sm font-medium"
+                :class="item.ok ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+              >
+                {{ item.ok ? `HTTP ${item.status}` : (item.error || '无法访问') }}
+              </span>
+              <span :class="item.ok ? 'text-green-500 text-xl' : 'text-red-500 text-xl'">
+                {{ item.ok ? '✓' : '✗' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 操作日志 -->
+      <div v-if="activeTab === 'audit'">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-lg font-semibold text-ink-900">操作日志</h2>
+          <select v-model="auditFilter" @change="fetchAuditLogs(1)" class="bg-paper-100 border border-ink-200 rounded-sm px-3 py-2 text-ink-900 text-sm focus:border-primary-500 focus:outline-none">
+            <option value="">全部操作</option>
+            <option value="CREATE_LINK">创建链接</option>
+            <option value="UPDATE_LINK">更新链接</option>
+            <option value="DELETE_LINK">删除链接</option>
+            <option value="CREATE_ARTICLE">创建文章</option>
+            <option value="UPDATE_ARTICLE">更新文章</option>
+            <option value="DELETE_ARTICLE">删除文章</option>
+            <option value="APPROVE_COMMENT">审核评论</option>
+            <option value="DELETE_COMMENT">删除评论</option>
+          </select>
+        </div>
+
+        <div v-if="auditLogs.length === 0" class="text-center py-12 text-ink-500">
+          <span class="seal-icon-lg mb-3">志</span>
+          <p>暂无操作日志</p>
+        </div>
+
+        <div v-else class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="text-left text-ink-500 text-sm border-b border-ink-200">
+                <th class="pb-3 pr-4">时间</th>
+                <th class="pb-3 pr-4">操作人</th>
+                <th class="pb-3 pr-4">操作</th>
+                <th class="pb-3 pr-4">资源</th>
+                <th class="pb-3">IP</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="log in auditLogs" :key="log.id" class="border-b border-ink-100 text-sm">
+                <td class="py-3 pr-4 text-ink-500 whitespace-nowrap">{{ formatDate(log.created_at) }}</td>
+                <td class="py-3 pr-4 text-ink-700">{{ log.admin_username }}</td>
+                <td class="py-3 pr-4">
+                  <span class="tag">{{ actionLabel(log.action) }}</span>
+                </td>
+                <td class="py-3 pr-4 text-ink-600">{{ log.resource }} #{{ log.resource_id || '-' }}</td>
+                <td class="py-3 text-ink-400">{{ log.ip_address }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-if="auditPagination.totalPages > 1" class="flex items-center justify-center gap-2 mt-6">
+            <button
+              v-for="p in auditPagination.totalPages" :key="p"
+              @click="fetchAuditLogs(p)"
+              :class="['px-3 py-1 rounded-sm text-sm', p === auditPagination.page ? 'bg-primary-500 text-white' : 'bg-paper-100 text-ink-600 hover:bg-paper-200']"
+            >{{ p }}</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 链接编辑弹窗 -->
@@ -425,7 +525,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useLinksStore } from '../../stores/links'
@@ -442,7 +542,9 @@ const tabs = [
   { id: 'links', name: '导航链接', icon: '链' },
   { id: 'articles', name: '文章管理', icon: '文' },
   { id: 'comments', name: '评论审核', icon: '评' },
-  { id: 'settings', name: '系统设置', icon: '设' }
+  { id: 'settings', name: '系统设置', icon: '设' },
+  { id: 'health', name: '健康检查', icon: '检' },
+  { id: 'audit', name: '操作日志', icon: '志' }
 ]
 
 const activeTab = ref('links')
@@ -470,6 +572,29 @@ const editingArticle = ref(null)
 const articleForm = ref({ title: '', slug: '', summary: '', content: '', tagsInput: '', published: false, generateAISummary: true })
 const savingArticle = ref(false)
 const contentTextarea = ref(null)
+
+// 健康检查
+const healthChecking = ref(false)
+const healthCheckResults = ref([])
+
+// 审计日志
+const auditLogs = ref([])
+const auditFilter = ref('')
+const auditPagination = ref({ page: 1, totalPages: 1, total: 0 })
+
+const actionLabel = (action) => {
+  const map = {
+    CREATE_LINK: '创建链接',
+    UPDATE_LINK: '更新链接',
+    DELETE_LINK: '删除链接',
+    CREATE_ARTICLE: '创建文章',
+    UPDATE_ARTICLE: '更新文章',
+    DELETE_ARTICLE: '删除文章',
+    APPROVE_COMMENT: '审核评论',
+    DELETE_COMMENT: '删除评论'
+  }
+  return map[action] || action
+}
 
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
@@ -520,6 +645,42 @@ const fetchData = async () => {
 
   stats.value.comments = 0
   stats.value.pendingComments = pendingComments.value.length
+}
+
+// 健康检查
+const runHealthCheck = async () => {
+  healthChecking.value = true
+  try {
+    const data = await apiRequest('/api/v1/links/health', {
+      headers: authStore.getAuthHeaders()
+    })
+    if (data.success) {
+      healthCheckResults.value = data.data
+    }
+  } catch (err) {
+    alert('健康检查失败: ' + err.message)
+  } finally {
+    healthChecking.value = false
+  }
+}
+
+// 审计日志
+const fetchAuditLogs = async (page = 1) => {
+  try {
+    const query = new URLSearchParams({ page: String(page), limit: '20' })
+    if (auditFilter.value) {
+      query.set('action', auditFilter.value)
+    }
+    const data = await apiRequest(`/api/v1/audit-logs?${query.toString()}`, {
+      headers: authStore.getAuthHeaders()
+    })
+    if (data.success) {
+      auditLogs.value = data.data
+      auditPagination.value = data.pagination
+    }
+  } catch (err) {
+    console.error('获取审计日志失败:', err)
+  }
 }
 
 // 链接操作
@@ -724,6 +885,12 @@ const deleteComment = async (id) => {
     }
   }
 }
+
+watch(activeTab, (tab) => {
+  if (tab === 'audit') {
+    fetchAuditLogs(1)
+  }
+})
 
 onMounted(() => {
   if (!authStore.isLoggedIn) {

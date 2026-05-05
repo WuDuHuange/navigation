@@ -23,11 +23,10 @@ jobs:
         run: |
           npm ci
           npm ci --prefix api
+          npm ci --prefix frontend
 
-      - name: Run minimal API tests
-        run: |
-          cd api
-          node tests/run-min-tests.js
+      - name: Run API tests
+        run: npm test --prefix api
 
-      - name: Build (if present)
-        run: npm run build --if-present
+      - name: Build frontend
+        run: npm run build --prefix frontend
