@@ -21,14 +21,30 @@
 
     <!-- 导航卡片 -->
     <section class="min-h-[clamp(22rem,50vh,40rem)]">
-      <div class="flex items-center justify-between mb-8">
+      <div class="flex items-center justify-between mb-6">
         <h2 class="text-2xl font-bold text-ink-800 flex items-center gap-3">
           <span class="seal-icon">入</span>
           <span>项目入口</span>
         </h2>
-        <span class="tag">
-          {{ linksStore.links.length }} 个项目
-        </span>
+        <div class="flex items-center gap-2">
+          <button
+            @click="switchSort('')"
+            :class="['px-4 py-2 text-sm font-medium transition-all duration-200 rounded-sm border',
+              currentSort === '' ? 'bg-primary-500 text-white border-primary-500' : 'bg-white text-ink-600 border-paper-400 hover:border-primary-500 hover:text-primary-500']"
+          >
+            默认
+          </button>
+          <button
+            @click="switchSort('hot')"
+            :class="['px-4 py-2 text-sm font-medium transition-all duration-200 rounded-sm border',
+              currentSort === 'hot' ? 'bg-primary-500 text-white border-primary-500' : 'bg-white text-ink-600 border-paper-400 hover:border-primary-500 hover:text-primary-500']"
+          >
+            热门
+          </button>
+          <span class="tag ml-2">
+            {{ linksStore.links.length }} 个项目
+          </span>
+        </div>
       </div>
       <LinkGrid :links="linksStore.links" :loading="linksStore.loading" />
     </section>
@@ -97,6 +113,12 @@ import { useArticlesStore } from '../stores/articles'
 const linksStore = useLinksStore()
 const articlesStore = useArticlesStore()
 const recentArticles = computed(() => articlesStore.articles.slice(0, 2))
+const currentSort = ref('')
+
+const switchSort = async (sort) => {
+  currentSort.value = sort
+  await linksStore.fetchLinks(sort)
+}
 
 const formatDate = (dateStr) => {
   if (!dateStr) return ''

@@ -67,18 +67,30 @@
       <div v-if="activeTab === 'links'">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-lg font-semibold text-ink-900">导航链接列表</h2>
-          <button
-            @click="openLinkModal()"
-            class="btn-primary"
-          >
-            + 添加链接
-          </button>
+          <div class="flex gap-2">
+            <button
+              v-if="selectedLinkIds.length > 0"
+              @click="batchDeleteLinks"
+              class="btn-secondary text-red-600 border-red-300 hover:bg-red-50"
+            >
+              批量删除 ({{ selectedLinkIds.length }})
+            </button>
+            <button
+              @click="openLinkModal()"
+              class="btn-primary"
+            >
+              + 添加链接
+            </button>
+          </div>
         </div>
         
         <div class="overflow-x-auto">
           <table class="w-full">
             <thead>
               <tr class="text-left text-ink-500 text-sm border-b border-ink-200">
+                <th class="pb-3 pr-2 w-8">
+                  <input type="checkbox" @change="toggleSelectAllLinks" :checked="selectedLinkIds.length === links.length && links.length > 0" class="w-4 h-4 rounded-sm border-ink-300 text-primary-500 focus:ring-primary-500" />
+                </th>
                 <th class="pb-3 pr-4">图标</th>
                 <th class="pb-3 pr-4">标题</th>
                 <th class="pb-3 pr-4">链接</th>
@@ -89,6 +101,9 @@
             </thead>
             <tbody>
               <tr v-for="link in links" :key="link.id" class="border-b border-ink-100">
+                <td class="py-4 pr-2">
+                  <input type="checkbox" :checked="selectedLinkIds.includes(link.id)" @change="toggleSelectLink(link.id)" class="w-4 h-4 rounded-sm border-ink-300 text-primary-500 focus:ring-primary-500" />
+                </td>
                 <td class="py-4 pr-4 text-2xl">{{ link.icon }}</td>
                 <td class="py-4 pr-4 text-ink-900">{{ link.title }}</td>
                 <td class="py-4 pr-4">
@@ -163,7 +178,16 @@
 
       <!-- 评论管理 -->
       <div v-if="activeTab === 'comments'">
-        <h2 class="text-lg font-semibold text-ink-900 mb-6">待审核评论</h2>
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-lg font-semibold text-ink-900">待审核评论</h2>
+          <button
+            v-if="pendingComments.length > 0"
+            @click="batchApproveComments"
+            class="btn-secondary text-green-600 border-green-300 hover:bg-green-50"
+          >
+            全部通过 ({{ pendingComments.length }})
+          </button>
+        </div>
         
         <div v-if="pendingComments.length === 0" class="text-center py-12 text-ink-500">
           <span class="seal-icon-lg mb-3">空</span>
@@ -572,6 +596,56 @@ const editingArticle = ref(null)
 const articleForm = ref({ title: '', slug: '', summary: '', content: '', tagsInput: '', published: false, generateAISummary: true })
 const savingArticle = ref(false)
 const contentTextarea = ref(null)
+
+// 批量操作
+const selectedLinkIds = ref([])
+
+const toggleSelectLink = (id) => {
+  const idx = selectedLinkIds.value.indexOf(id)
+  if (idx >= 0) {
+    selectedLinkIds.value.splice(idx, 1)
+  } else {
+    selectedLinkIds.value.push(id)
+  }
+}
+
+const toggleSelectAllLinks = (event) => {
+  if (event.target.checked) {
+    selectedLinkIds.value = links.value.map(l => l.id)
+  } else {
+    selectedLinkIds.value = []
+  }
+}
+
+const batchDeleteLinks = async () => {
+  if (!confirm(`确定删除选中的 ${selectedLinkIds.value.length} 个链接吗？此操作不可撤销。`)) return
+  try {
+    for (const id of selectedLinkIds.value) {
+      await linksStore.deleteLink(id)
+    }
+    selectedLinkIds.value = []
+    await fetchData()
+  } catch (err) {
+    alert('批量删除失败: ' + err.message)
+  }
+}
+
+const batchApproveComments = async () => {
+  if (!confirm(`确定通过全部 ${pendingComments.value.length} 条待审核评论吗？`)) return
+  try {
+    for (const comment of pendingComments.value) {
+      await apiRequest(`/api/v1/comments/${comment.id}/approve`, {
+        method: 'PUT',
+        headers: authStore.getAuthHeaders(),
+        body: { approved: true }
+      })
+    }
+    pendingComments.value = []
+    stats.value.pendingComments = 0
+  } catch (err) {
+    alert('批量审核失败: ' + err.message)
+  }
+}
 
 // 健康检查
 const healthChecking = ref(false)

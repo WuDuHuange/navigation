@@ -92,3 +92,11 @@
 - 管理后台：`AdminDashboard.vue` 新增"健康检查"与"操作日志"两个 Tab 页。
 - 数据库：提供增量迁移脚本 `api/db/migrate_20260430.sql`。
 - 验证：`npm test --prefix api` 12 条测试全通过，`npm run build --prefix frontend` 构建成功。
+
+### 2026-05-05 第五阶段（搜索筛选 & 批量操作）
+
+- 导航核心：首页新增"默认/热门"排序切换按钮，`GET /api/v1/links` 支持 `?search=` 服务端模糊搜索（ILIKE 匹配标题、描述、URL）。
+- 导航核心：`LinkGrid.vue` 新增搜索栏，可即时按标题/描述/链接地址筛选卡片。
+- 管理后台：链接列表新增复选框与"批量删除"按钮。
+- 管理后台：评论审核新增"全部通过"一键批量审核。
+- 验证：`npm test` 12/12 通过，`npm run build` 构建成功。

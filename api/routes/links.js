@@ -9,13 +9,22 @@ const router = express.Router()
 router.get('/', async (req, res, next) => {
   try {
     const sort = req.query.sort
+    const search = req.query.search
     let orderClause = 'ORDER BY sort_order ASC, created_at DESC'
     if (sort === 'hot') {
       orderClause = 'ORDER BY click_count DESC, created_at DESC'
     }
 
+    let whereClause = 'WHERE is_active = true'
+    let params = []
+    if (search && search.trim()) {
+      whereClause += ` AND (title ILIKE $1 OR description ILIKE $1 OR url ILIKE $1)`
+      params.push(`%${search.trim()}%`)
+    }
+
     const result = await db.query(
-      `SELECT * FROM links WHERE is_active = true ${orderClause}`
+      `SELECT * FROM links ${whereClause} ${orderClause}`,
+      params
     )
     res.json({ success: true, data: result.rows })
   } catch (err) {
