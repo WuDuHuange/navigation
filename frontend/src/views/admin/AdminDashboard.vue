@@ -545,6 +545,8 @@
         </div>
       </div>
     </div>
+
+    <ToastNotification ref="toastRef" />
   </div>
 </template>
 
@@ -555,12 +557,14 @@ import { useAuthStore } from '../../stores/auth'
 import { useLinksStore } from '../../stores/links'
 import { useArticlesStore } from '../../stores/articles'
 import ImageUpload from '../../components/common/ImageUpload.vue'
+import ToastNotification from '../../components/common/ToastNotification.vue'
 import { apiRequest } from '../../utils/apiClient'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const linksStore = useLinksStore()
 const articlesStore = useArticlesStore()
+const toastRef = ref(null)
 
 const tabs = [
   { id: 'links', name: '导航链接', icon: '链' },
@@ -626,7 +630,7 @@ const batchDeleteLinks = async () => {
     selectedLinkIds.value = []
     await fetchData()
   } catch (err) {
-    alert('批量删除失败: ' + err.message)
+    toastRef.value?.error('批量删除失败: ' + err.message)
   }
 }
 
@@ -643,7 +647,7 @@ const batchApproveComments = async () => {
     pendingComments.value = []
     stats.value.pendingComments = 0
   } catch (err) {
-    alert('批量审核失败: ' + err.message)
+    toastRef.value?.error('批量审核失败: ' + err.message)
   }
 }
 
@@ -732,7 +736,7 @@ const runHealthCheck = async () => {
       healthCheckResults.value = data.data
     }
   } catch (err) {
-    alert('健康检查失败: ' + err.message)
+    toastRef.value?.error('健康检查失败: ' + err.message)
   } finally {
     healthChecking.value = false
   }
@@ -778,7 +782,7 @@ const saveLinkForm = async () => {
     showLinkModal.value = false
     await fetchData()
   } catch (err) {
-    alert(err.message)
+    toastRef.value?.error(err.message)
   }
 }
 
@@ -788,7 +792,7 @@ const confirmDeleteLink = async (link) => {
       await linksStore.deleteLink(link.id)
       await fetchData()
     } catch (err) {
-      alert(err.message)
+      toastRef.value?.error(err.message)
     }
   }
 }
@@ -830,7 +834,7 @@ const saveArticleForm = async () => {
     showArticleModal.value = false
     await fetchData()
   } catch (err) {
-    alert(err.message)
+    toastRef.value?.error(err.message)
   } finally {
     savingArticle.value = false
   }
@@ -842,7 +846,7 @@ const confirmDeleteArticle = async (article) => {
       await articlesStore.deleteArticle(article.id)
       await fetchData()
     } catch (err) {
-      alert(err.message)
+      toastRef.value?.error(err.message)
     }
   }
 }
@@ -857,10 +861,10 @@ const regenerateSummary = async (article) => {
       headers: authStore.getAuthHeaders()
     })
 
-    alert('AI 总结已重新生成')
+    toastRef.value?.success('AI 总结已重新生成')
     await fetchData()
   } catch (err) {
-    alert('生成失败: ' + err.message)
+    toastRef.value?.error('生成失败: ' + err.message)
   }
 }
 
@@ -940,8 +944,9 @@ const approveComment = async (id) => {
     })
     pendingComments.value = pendingComments.value.filter(c => c.id !== id)
     stats.value.pendingComments--
+    toastRef.value?.success('评论已通过')
   } catch (err) {
-    alert('操作失败')
+    toastRef.value?.error('操作失败: ' + err.message)
   }
 }
 
@@ -954,8 +959,9 @@ const deleteComment = async (id) => {
       })
       pendingComments.value = pendingComments.value.filter(c => c.id !== id)
       stats.value.pendingComments--
+      toastRef.value?.success('评论已删除')
     } catch (err) {
-      alert('操作失败')
+      toastRef.value?.error('操作失败: ' + err.message)
     }
   }
 }

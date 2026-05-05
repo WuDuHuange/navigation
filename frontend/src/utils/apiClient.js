@@ -17,7 +17,13 @@ const ERROR_CODE_MESSAGE_MAP = {
   INTERNAL_ERROR: '服务内部错误，请稍后重试',
   AUTH_REQUIRED: '请先登录再继续操作',
   INVALID_TOKEN: '登录状态已失效，请重新登录',
-  RATE_LIMITED: '操作过于频繁，请稍后再试'
+  RATE_LIMITED: '操作过于频繁，请稍后再试',
+  CONTENT_TOO_SHORT: '内容过短，请多写一点',
+  CONTENT_TOO_LONG: '内容过长，请精简后提交',
+  DUPLICATE_COMMENT: '请勿重复提交相同内容',
+  INVALID_NICKNAME: '昵称格式不正确',
+  INVALID_CONTENT: '内容包含不支持的格式',
+  NOT_FOUND: '请求的资源不存在'
 }
 
 export class ApiError extends Error {

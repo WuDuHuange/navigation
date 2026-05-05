@@ -21,9 +21,20 @@ test('POST /comments returns 400 when required fields missing', async () => {
 test('POST /comments returns 201 on valid payload', async () => {
   const commentsRouter = proxyquire('../routes/comments', {
     '../db': {
-      query: async () => ({
-        rows: [{ id: 9, nickname: '访客', content: '写得很好', created_at: new Date().toISOString() }]
-      })
+      query: async (sql) => {
+        // 重复检测 → 无重复
+        if (sql.includes('SELECT id FROM comments WHERE ip_address')) {
+          return { rows: [] }
+        }
+        // 文章存在性检查 → 存在
+        if (sql.includes('SELECT id FROM articles')) {
+          return { rows: [{ id: 1 }] }
+        }
+        // INSERT → 返回新建评论
+        return {
+          rows: [{ id: 9, nickname: '访客', content: '写得很好', created_at: new Date().toISOString() }]
+        }
+      }
     }
   })
 

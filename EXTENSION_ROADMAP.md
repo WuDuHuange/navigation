@@ -100,3 +100,13 @@
 - 管理后台：链接列表新增复选框与"批量删除"按钮。
 - 管理后台：评论审核新增"全部通过"一键批量审核。
 - 验证：`npm test` 12/12 通过，`npm run build` 构建成功。
+
+### 2026-05-05 第六阶段（评论防刷 & 管理 UX）
+
+- 安全风控：提取共享评论校验模块 `api/utils/commentValidator.js`（昵称长度 2-20、内容 2-2000、禁止 URL/HTML 标签）。
+- 安全风控：`POST /comments` 和 `POST /articles/:id/comments` 均接入校验，新增同一 IP 5 分钟内重复内容检测。
+- 安全风控：评论提交前验证文章存在性，返回 `NOT_FOUND` / `DUPLICATE_COMMENT` / `INVALID_NICKNAME` 等结构化错误码。
+- 前端：`apiClient` 错误码映射新增 `CONTENT_TOO_SHORT/LONG`、`DUPLICATE_COMMENT`、`INVALID_NICKNAME`、`INVALID_CONTENT`、`NOT_FOUND`。
+- 管理 UX：新增 `ToastNotification.vue` 组件（success/error/warning/info 四种类型，自动消失，支持手动关闭）。
+- 管理 UX：`AdminDashboard.vue` 全部 `alert()` 替换为 toast 通知（操作成功/失败均有友好反馈）。
+- 验证：`npm test` 12/12 通过，`npm run build` 构建成功。

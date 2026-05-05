@@ -4,6 +4,7 @@ const authMiddleware = require('../middleware/auth')
 const aiService = require('../services/ai')
 const { createRateLimiter } = require('../middleware/rateLimit')
 const { auditLog } = require('../middleware/auditLog')
+const { validateNickname, validateContent } = require('../utils/commentValidator')
 
 const router = express.Router()
 const commentRateLimit = createRateLimiter({
@@ -210,7 +211,33 @@ router.post('/:id/comments', commentRateLimit, async (req, res, next) => {
     if (!nickname || !content) {
       return res.status(400).json({ error: '昵称和内容为必填项' })
     }
+
+    // 昵称校验
+    const nicknameErr = validateNickname(nickname)
+    if (nicknameErr) {
+      return res.status(400).json({ error: nicknameErr, code: 'INVALID_NICKNAME' })
+    }
+
+    // 内容校验
+    const contentErr = validateContent(content)
+    if (contentErr) {
+      return res.status(400).json({ error: contentErr.error, code: contentErr.code })
+    }
+
     const ip = req.headers['x-forwarded-for'] || req.ip
+
+    // 重复检测
+    const dupResult = await db.query(
+      `SELECT id FROM comments WHERE ip_address = $1 AND content = $2 AND created_at > NOW() - INTERVAL '5 minutes'`,
+      [ip, content]
+    )
+    if (dupResult.rows.length > 0) {
+      return res.status(400).json({
+        error: '请勿重复提交相同评论',
+        code: 'DUPLICATE_COMMENT'
+      })
+    }
+
     const result = await db.query(
       `INSERT INTO comments (article_id, nickname, email, content, ip_address)
        VALUES ($1, $2, $3, $4, $5) RETURNING id, nickname, content, created_at`,
